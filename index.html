@@ -7,31 +7,31 @@
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg:        #f5faf6;
-    --bg2:       #eaf4ec;
+    --bg:        #f4f4f5;
+    --bg2:       #ebebec;
     --surface:   #ffffff;
-    --surface2:  #f0f8f2;
-    --accent:    #4a8c6a;
-    --accent2:   #6aaa88;
-    --accent3:   #8ac4a0;
-    --gold:      #5a9e70;
+    --surface2:  #f7f7f8;
+    --accent:    #4a82c4;
+    --accent2:   #6a9fd8;
+    --accent3:   #8ab8e8;
+    --gold:      #4a82c4;
     --rose:      #b05050;
     --text:      #1a1a1a;
     --text-mid:  #3a3a3a;
     --text-muted:#888888;
-    --border:    #c8e0d0;
-    --border2:   #dceee2;
-    --thead-bg:  #d8f0e0;
-    --thead2-bg: #eaf8f0;
-    --row-even:  #f7fdf8;
-    --row-hover: #eaf5ee;
+    --border:    #d8d8da;
+    --border2:   #e4e4e6;
+    --thead-bg:  #dce8f4;
+    --thead2-bg: #eaf2fa;
+    --row-even:  #f9f9fa;
+    --row-hover: #eaf2fb;
     --input-bg:  #ffffff;
-    --success:   #3a7a50;
+    --success:   #3a70b0;
     --warning:   #b86820;
     --danger:    #aa3a3a;
-    --shadow:    rgba(60,140,100,0.08);
+    --shadow:    rgba(0,0,0,0.06);
 
-    --tab-mid1:  #3a7a50;
+    --tab-mid1:  #3a70b0;
     --tab-mid2:  #6658a8;
     --tab-final: #aa3a3a;
   }
@@ -46,22 +46,19 @@
 
   /* HEADER */
   header {
-    background: linear-gradient(135deg, #d8f0e4, #eaf8f0);
-    border-bottom: 2px solid var(--accent2);
+    background: linear-gradient(135deg, #e8e8ea, #f2f2f4);
+    border-bottom: 2px solid #6a9fd8;
     padding: 14px 24px;
     display: flex; align-items: center; justify-content: space-between;
     box-shadow: 0 2px 16px var(--shadow);
   }
-  .header-left { display: flex; align-items: center; gap: 14px; }
-  .logo-mark {
-    width: 42px; height: 42px;
-    background: linear-gradient(135deg, #4a82c4, #6aa0d8);
-    border-radius: 8px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 15px; font-weight: 700; color: white;
-    box-shadow: 0 2px 10px rgba(74,130,196,0.3);
+  .header-left { display: flex; align-items: center; gap: 12px; }
+  .header-brand {
+    font-size: 14px; font-weight: 600; color: #4a82c4;
+    white-space: nowrap; display: flex; align-items: center; gap: 8px;
   }
-  .header-title h1 { font-size: 19px; font-weight: 700; color: #4a82c4; letter-spacing: 0.06em; }
+  .header-sep { color: var(--border); font-weight: 300; font-size: 18px; }
+  .header-title h1 { font-size: 16px; font-weight: 400; color: var(--text-mid); letter-spacing: 0.04em; }
   .header-title p { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
   .header-meta { font-size: 12px; color: var(--text-mid); }
   .header-meta span { color: var(--accent); font-weight: 600; }
@@ -82,10 +79,10 @@
     transition: all 0.18s; white-space: nowrap;
   }
   .btn:disabled { opacity: 0.38; cursor: not-allowed; transform: none !important; }
-  .btn-primary { background: var(--accent); color: white; box-shadow: 0 2px 8px rgba(60,140,100,0.25); }
+  .btn-primary { background: var(--accent); color: white; box-shadow: 0 2px 8px rgba(74,130,196,0.25); }
   .btn-primary:not(:disabled):hover { background: #3a6aa0; transform: translateY(-1px); }
-  .btn-success { background: var(--success); color: white; box-shadow: 0 2px 8px rgba(90,158,122,0.25); }
-  .btn-success:not(:disabled):hover { background: #4a8e6a; transform: translateY(-1px); }
+  .btn-success { background: #3a70b0; color: white; box-shadow: 0 2px 8px rgba(58,112,176,0.25); }
+  .btn-success:not(:disabled):hover { background: #3a6faa; transform: translateY(-1px); }
   .btn-warning { background: var(--warning); color: white; box-shadow: 0 2px 8px rgba(200,150,58,0.25); }
   .btn-warning:not(:disabled):hover { background: #a87828; transform: translateY(-1px); }
   .btn-edit { background: #4a82c4; color: white; box-shadow: 0 2px 8px rgba(74,130,196,0.25); }
@@ -97,7 +94,7 @@
 
   /* EDIT BANNER */
   .edit-banner {
-    display: none; background: #f0fbf4;
+    display: none; background: #f4f4f6;
     border-bottom: 2px solid var(--warning);
     padding: 8px 24px; font-size: 12px; color: var(--warning);
     font-weight: 600; align-items: center; gap: 8px;
@@ -127,17 +124,18 @@
   .top-stats-bar .sum-card::after {
     content: ''; position: absolute; bottom: 0; left: 0; width: 100%; height: 3px;
   }
-  .top-stats-bar .sum-card.c3::after { background: var(--success); }
+  .top-stats-bar .sum-card.c3::after { background: #3a70b0; }
   .top-stats-bar .sum-card label { font-size: 10px; color: var(--text-muted); display: block; margin-bottom: 4px; }
-  .top-stats-bar .sum-card .val { font-size: 20px; font-weight: 700; color: var(--success); }
+  .top-stats-bar .sum-card .val { font-size: 20px; font-weight: 700; color: #3a70b0; }
 
   /* 目標売上達成率カード */
   .goal-card {
     background: var(--surface); border: 1px solid var(--border2);
     border-radius: 8px; padding: 10px 16px;
     box-shadow: 0 1px 6px var(--shadow);
-    display: flex; align-items: center; gap: 14px; flex: 1;
-    border-bottom: 3px solid var(--accent);
+    display: flex; align-items: center; gap: 14px;
+    border-bottom: 3px solid #4a82c4;
+    flex-shrink: 0;
   }
   .goal-card-left { flex-shrink: 0; }
   .goal-canvas-wrap {
@@ -163,7 +161,7 @@
     background: var(--surface2); outline: none; text-align: right;
     transition: border-color 0.2s;
   }
-  .goal-card-mid input:focus { border-color: var(--accent2); box-shadow: 0 0 0 2px rgba(74,140,106,0.12); }
+  .goal-card-mid input:focus { border-color: var(--accent2); box-shadow: 0 0 0 2px rgba(74,130,196,0.12); }
   .goal-sub { font-size: 10px; color: var(--text-muted); }
 
   .goal-card-right { display: flex; gap: 8px; flex-wrap: wrap; }
@@ -204,7 +202,7 @@
     transition: border-color 0.15s;
     min-width: 180px;
   }
-  .year-select:focus { border-color: var(--accent2); box-shadow: 0 0 0 2px rgba(201,100,66,0.12); }
+  .year-select:focus { border-color: var(--accent2); box-shadow: 0 0 0 2px rgba(74,130,196,0.12); }
   .year-add-btn {
     display: flex; align-items: center; gap: 4px;
     padding: 5px 12px; border-radius: 6px;
@@ -231,7 +229,7 @@
     padding: 0 24px;
     display: flex; align-items: flex-end; gap: 4px;
     background: var(--surface);
-    border-bottom: 3px solid var(--accent);
+    border-bottom: 3px solid #4a82c4;
     margin-top: 0;
   }
   .tab-btn {
@@ -321,7 +319,7 @@
   thead th {
     padding: 9px 8px; font-size: 11px; font-weight: 700;
     color: var(--accent); text-align: center;
-    border-bottom: 2px solid var(--accent2);
+    border-bottom: 2px solid #6a9fd8;
     border-right: 1px solid var(--border);
     white-space: nowrap; position: sticky; top: 0;
     background: var(--thead-bg); z-index: 5;
@@ -339,7 +337,7 @@
   tbody td:last-child { border-right: none; }
 
   /* 支払テーブルのテーマカラー */
-  .th-pay1 { background: #e0f2e9 !important; color: var(--tab-mid1) !important; font-size: 10px !important; font-weight: 600 !important; }
+  .th-pay1 { background: #daeaf8 !important; color: #3a70b0 !important; font-size: 10px !important; font-weight: 600 !important; }
   .th-pay2 { background: #e8e4f5 !important; color: var(--tab-mid2) !important; font-size: 10px !important; font-weight: 600 !important; }
   .th-payf { background: #f5e4e4 !important; color: var(--tab-final) !important; font-size: 10px !important; font-weight: 600 !important; }
 
@@ -356,7 +354,7 @@
   }
   .pay-total-label { font-size: 11px; color: var(--text-muted); }
   .pay-total-val { font-size: 17px; font-weight: 700; margin-left: auto; }
-  .mid1-total .pay-total-val  { color: var(--tab-mid1); }
+  .mid1-total .pay-total-val  { color: #3a70b0; }
   .mid2-total .pay-total-val  { color: var(--tab-mid2); }
   .final-total .pay-total-val { color: var(--tab-final); }
   .mid1-total  { border-bottom: 3px solid var(--tab-mid1); }
@@ -365,11 +363,11 @@
 
   /* 編集モード テーブル装飾 */
   body.edit-mode .table-container { border-color: var(--warning); }
-  body.edit-mode thead th { background: #eef8f2; color: #1a1a1a; border-bottom-color: var(--warning); }
-  body.edit-mode .th-group { background: #daf0e4 !important; color: #1a1a1a !important; }
+  body.edit-mode thead th { background: #f0f0f2; color: #1a1a1a; border-bottom-color: var(--warning); }
+  body.edit-mode .th-group { background: #deeaf8 !important; color: #1a1a1a !important; }
   body.edit-mode tbody tr:nth-child(odd)  { background: #fdfaf6; }
-  body.edit-mode tbody tr:nth-child(even) { background: #eef8f2; }
-  body.edit-mode tbody tr:hover { background: #eef8f2; }
+  body.edit-mode tbody tr:nth-child(even) { background: #f0f0f2; }
+  body.edit-mode tbody tr:hover { background: #f0f0f2; }
 
   /* VIEW / EDIT セル */
   .cell-view {
@@ -409,10 +407,10 @@
     font-size: 11px; font-weight: 500; border: 1px solid currentColor;
   }
   .sb-見積書作成中 { color: var(--text-mid); border-color: var(--border); background: #f5faf6; }
-  .sb-見積書提出済 { color: var(--warning); border-color: #e8b870; background: #f0fbf4; }
+  .sb-見積書提出済 { color: var(--warning); border-color: #e8b870; background: #f4f4f6; }
   .sb-契約済       { color: var(--success); border-color: #8abe9e; background: #f0faf4; }
   .sb-中間請求済   { color: #4a9ab0; border-color: #7ac0d8; background: #f0faf6; }
-  .sb-納品請求済   { color: var(--accent); border-color: var(--accent2); background: #eef8f2; }
+  .sb-納品請求済   { color: var(--accent); border-color: var(--accent2); background: #f0f0f2; }
   .sb-変更契約待   { color: #b07a30; border-color: #d09050; background: #fef8f0; }
   .sb-最終契約待   { color: #9060c0; border-color: #b090d8; background: #f8f4fc; }
   .sb-その他       { color: var(--text-muted); border-color: var(--border); background: #f5faf6; }
@@ -429,7 +427,7 @@
 
   /* 支払タブの金額表示 */
   .pay-amount { text-align: right; font-weight: 700; font-size: 13px; }
-  .pay-amount.mid1  { color: var(--tab-mid1); }
+  .pay-amount.mid1  { color: #3a70b0; }
   .pay-amount.mid2  { color: var(--tab-mid2); }
   .pay-amount.final { color: var(--tab-final); }
   .pay-month  { text-align: center; font-weight: 500; color: var(--text-mid); }
@@ -455,7 +453,7 @@
   body.edit-mode .row-num-cell:hover .drag-handle { display: none; }
 
   tr.dragging { opacity: 0.4; background: var(--row-hover) !important; }
-  tr.drag-over { border-top: 2px solid var(--accent) !important; background: #eaf5ee !important; }
+  tr.drag-over { border-top: 2px solid #4a82c4 !important; background: #ebebed !important; }
   tbody tr { cursor: default; }
   body.edit-mode tbody tr { cursor: grab; }
   .row-num-cell {
@@ -516,7 +514,7 @@
   .toast.error { border-color: var(--danger); color: var(--danger); }
 
   /* ===== 業務進捗パネル ===== */
-  .t-prog .tab-dot { background: #7a8a5a; }
+  .t-prog .tab-dot { background: #5a8ac8; }
 
   .prog-wrap {
     padding: 16px 24px;
@@ -570,8 +568,8 @@
     transition: width 0.4s ease;
     position: relative;
   }
-  .prog-bar-fill.p-survey  { background: linear-gradient(90deg, #a8c87a, #7aa85a); }
-  .prog-bar-fill.p-inspect { background: linear-gradient(90deg, #7ab8e8, #4a90c8); }
+  .prog-bar-fill.p-survey  { background: linear-gradient(90deg, #7ab8e8, #4a90c8); }
+  .prog-bar-fill.p-inspect { background: linear-gradient(90deg, #8ac8e8, #5aaad8); }
   .prog-bar-fill.p-damage  { background: linear-gradient(90deg, #f0b87a, #d8884a); }
   .prog-bar-fill.p-report  { background: linear-gradient(90deg, #c8a0d8, #9870b8); }
 
@@ -622,7 +620,7 @@
     background: var(--surface2); color: var(--text); outline: none;
     transition: border-color 0.18s;
   }
-  .list-add-row input:focus { border-color: var(--accent2); box-shadow: 0 0 0 2px rgba(74,140,106,0.12); }
+  .list-add-row input:focus { border-color: var(--accent2); box-shadow: 0 0 0 2px rgba(74,130,196,0.12); }
 
   .list-items { display: flex; flex-direction: column; gap: 6px; }
   .list-item {
@@ -644,7 +642,7 @@
   }
   .list-item-name:focus {
     background: var(--input-bg);
-    box-shadow: 0 0 0 2px rgba(74,140,106,0.15);
+    box-shadow: 0 0 0 2px rgba(74,130,196,0.15);
   }
   .list-item-del {
     background: none; border: none; color: var(--text-muted);
@@ -669,7 +667,7 @@
     background: #e8e8e8; color: #555;
   }
   .koushu-橋梁点検      { background: #d8eaf8; color: #3a6fa4; }
-  .koushu-トンネル点検  { background: #d8ecd8; color: #3a7040; }
+  .koushu-トンネル点検  { background: #d8eaf8; color: #3a5a9a; }
   .koushu-附属物点検    { background: #fce8d4; color: #a46030; }
   .koushu-覆工構造物点検 { background: #ead8f0; color: #7a4a9a; }
   .koushu-その他        { background: #e8e8e8; color: #666; }
@@ -689,7 +687,7 @@
   }
   .ks-card::after { content:''; position:absolute; left:0; top:0; width:3px; height:100%; }
   .ks-card.ks-橋梁点検::after      { background: #5a8fc4; }
-  .ks-card.ks-トンネル点検::after   { background: #7a9e5a; }
+  .ks-card.ks-トンネル点検::after   { background: #5a8ac8; }
   .ks-card.ks-附属物点検::after     { background: #c4924a; }
   .ks-card.ks-覆工構造物点検::after { background: #9a6ab4; }
   .ks-card.ks-その他::after         { background: #aaaaaa; }
@@ -707,10 +705,9 @@
 
 <header>
   <div class="header-left">
-    <div class="logo-mark">FD</div>
+    <div class="header-brand">⚪ FRe:x Design inc. <span class="header-sep">|</span></div>
     <div class="header-title">
       <h1>業務請負一覧表</h1>
-      <p>株式会社フレックスデザイン ／ 道路インフラ点検業務管理システム</p>
     </div>
   </div>
   <div class="header-meta">
@@ -1582,7 +1579,7 @@ function renderProgPanel() {
 
     const items = progDefs.map(def => {
       const val = Math.min(100, Math.max(0, Number(row[def.key]) || 0));
-      const color = val >= 100 ? '#5a9a6a' : val >= 50 ? 'var(--accent)' : 'var(--text-mid)';
+      const color = val >= 100 ? '#4a82c4' : val >= 50 ? 'var(--accent)' : 'var(--text-mid)';
       return `
         <div class="prog-item">
           <span class="prog-item-label">${def.label}</span>
@@ -1619,7 +1616,7 @@ function updateProgField(el) {
   if (fill) fill.style.width = val + '%';
   if (view) {
     view.textContent = val + '%';
-    view.style.color = val >= 100 ? '#5a9a6a' : val >= 50 ? 'var(--accent)' : 'var(--text-mid)';
+    view.style.color = val >= 100 ? '#4a82c4' : val >= 50 ? 'var(--accent)' : 'var(--text-mid)';
   }
 }
 
@@ -1868,7 +1865,7 @@ function drawDonutCanvas(rate, over, ratePct) {
 
   const cs = getComputedStyle(document.documentElement);
   const filledColor = getDonutColor(over, ratePct);
-  const emptyColor  = '#e0eee8';
+  const emptyColor  = '#e0e0e2';
 
   ctx.clearRect(0, 0, size, size);
 
