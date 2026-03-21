@@ -568,7 +568,7 @@
     transition: width 0.4s ease;
     position: relative;
   }
-  .prog-bar-fill.p-survey  { background: linear-gradient(90deg, #98fb98, #6de06d); }
+  .prog-bar-fill.p-survey  { background: linear-gradient(90deg, #d2b48c, #b8966e); }
   .prog-bar-fill.p-inspect { background: linear-gradient(90deg, #8ac8e8, #5aaad8); }
   .prog-bar-fill.p-damage  { background: linear-gradient(90deg, #f0b87a, #d8884a); }
   .prog-bar-fill.p-report  { background: linear-gradient(90deg, #c8a0d8, #9870b8); }
@@ -666,11 +666,11 @@
     border-radius: 4px; text-align: center;
     background: #e8e8e8; color: #555;
   }
-  .koushu-橋梁点検      { background: #d8eaf8; color: #3a6fa4; }
-  .koushu-トンネル点検  { background: #d8eaf8; color: #3a5a9a; }
-  .koushu-附属物点検    { background: #fce8d4; color: #a46030; }
-  .koushu-覆工構造物点検 { background: #ead8f0; color: #7a4a9a; }
-  .koushu-その他        { background: #e8e8e8; color: #666; }
+  .koushu-橋梁点検      { background: #cce5ff; color: #2a5fa0; }
+  .koushu-トンネル点検  { background: #c8f0d8; color: #1e7a48; }
+  .koushu-附属物点検    { background: #ffe4c4; color: #b05a10; }
+  .koushu-覆工構造物点検 { background: #e8d8f8; color: #6a3a9a; }
+  .koushu-その他        { background: #e4e4e4; color: #555; }
   select.koushu-sel { font-size: 11px; text-align: center; }
 
   /* 工種別集計カード */
@@ -685,12 +685,12 @@
     box-shadow: 0 1px 4px var(--shadow); min-width: 110px;
     position: relative; overflow: hidden;
   }
-  .ks-card::after { content:''; position:absolute; left:0; top:0; width:3px; height:100%; }
-  .ks-card.ks-橋梁点検::after      { background: #5a8fc4; }
-  .ks-card.ks-トンネル点検::after   { background: #5a8ac8; }
-  .ks-card.ks-附属物点検::after     { background: #c4924a; }
-  .ks-card.ks-覆工構造物点検::after { background: #9a6ab4; }
-  .ks-card.ks-その他::after         { background: #aaaaaa; }
+  .ks-card::after { content:''; position:absolute; left:0; top:0; width:4px; height:100%; border-radius:4px 0 0 4px; }
+  .ks-card.ks-橋梁点検::after      { background: #4a82c4; }
+  .ks-card.ks-トンネル点検::after   { background: #2ea860; }
+  .ks-card.ks-附属物点検::after     { background: #d07020; }
+  .ks-card.ks-覆工構造物点検::after { background: #8a50c8; }
+  .ks-card.ks-その他::after         { background: #999999; }
   .ks-label { font-size: 10px; color: var(--text-muted); }
   .ks-val   { font-size: 14px; font-weight: 700; color: var(--text); }
   .ks-cnt   { font-size: 10px; color: var(--text-muted); }
@@ -1747,6 +1747,15 @@ function onGoalInput(el) {
   updateGoalChart();
 }
 
+// 工種ごとの固有カラー（バッジ・カードと連動）
+const KOUSHU_CARD_COLOR = {
+  '橋梁点検':      { border: '#4a82c4', bg: '#eef5ff', text: '#2a5fa0' },
+  'トンネル点検':  { border: '#2ea860', bg: '#edfaf3', text: '#1e7a48' },
+  '附属物点検':    { border: '#d07020', bg: '#fff5ea', text: '#b05a10' },
+  '覆工構造物点検':{ border: '#8a50c8', bg: '#f5eeff', text: '#6a3a9a' },
+  'その他':        { border: '#999999', bg: '#f4f4f4', text: '#555555' },
+};
+
 function getDonutColor(over, ratePct) {
   return over ? '#5a9ad4' : ratePct >= 80 ? '#80b8d8' : '#d4a870';
 }
@@ -1756,19 +1765,11 @@ function updateKoushuSummary() {
   if (!wrap) return;
   wrap.innerHTML = '';
 
-  const settle  = rows.reduce((s,r) => s + calcSettlement(r), 0);
-  const goalVal = Number((document.getElementById('goalInput')?.value || '').replace(/,/g, '')) || 0;
-  const ratePct = goalVal > 0 ? (settle / goalVal * 100) : 0;
-  const over    = settle > goalVal && goalVal > 0;
-  const accentColor = getDonutColor(over, ratePct);
-
-  // 工種が1件以上設定されているものだけ表示
   const hasAny = rows.some(r => r.koushu);
   if (!hasAny) {
-    // 工種未設定時はプレースホルダー表示
     const ph = document.createElement('div');
     ph.className = 'ks-card';
-    ph.style.borderLeft = `3px solid ${accentColor}`;
+    ph.style.cssText = 'border-left:3px solid #aaa;';
     ph.innerHTML = `<span class="ks-label" style="color:var(--text-muted);font-style:italic">工種を設定すると集計が表示されます</span>`;
     wrap.appendChild(ph);
     return;
@@ -1778,12 +1779,13 @@ function updateKoushuSummary() {
     const matched = rows.filter(r => r.koushu === k);
     if (matched.length === 0) return;
     const total = matched.reduce((s, r) => s + calcSettlement(r), 0);
+    const col = KOUSHU_CARD_COLOR[k] || { border: '#aaa', bg: '#f4f4f4', text: '#555' };
     const card = document.createElement('div');
     card.className = 'ks-card';
-    card.style.borderLeft = `3px solid ${accentColor}`;
+    card.style.cssText = `border-left: 4px solid ${col.border}; background: ${col.bg};`;
     card.innerHTML = `
-      <span class="ks-label">${k}</span>
-      <span class="ks-val">¥${total.toLocaleString()}</span>
+      <span class="ks-label" style="color:${col.text};font-weight:600">${k}</span>
+      <span class="ks-val" style="color:${col.text}">¥${total.toLocaleString()}</span>
       <span class="ks-cnt">${matched.length}件</span>
     `;
     wrap.appendChild(card);
