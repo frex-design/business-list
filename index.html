@@ -661,14 +661,15 @@
 
   /* 工種バッジ */
   .koushu-badge {
-    display: inline-block; font-size: 12px; font-weight: 700;
-    width: 24px; height: 24px; line-height: 24px;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700;
+    width: 24px; height: 24px;
     border-radius: 4px; text-align: center;
     background: #e8e8e8; color: #555;
   }
-  .koushu-橋梁点検      { background: #cce5ff; color: #2a5fa0; }
+  .koushu-附属物点検    { background: #cce5ff; color: #2a5fa0; }
   .koushu-トンネル点検  { background: #c8f0d8; color: #1e7a48; }
-  .koushu-附属物点検    { background: #ffe4c4; color: #b05a10; }
+  .koushu-橋梁点検      { background: #ffe4c4; color: #b05a10; }
   .koushu-覆工構造物点検 { background: #e8d8f8; color: #6a3a9a; }
   .koushu-その他        { background: #e4e4e4; color: #555; }
   select.koushu-sel { font-size: 11px; text-align: center; }
@@ -686,9 +687,9 @@
     position: relative; overflow: hidden;
   }
   .ks-card::after { content:''; position:absolute; left:0; top:0; width:4px; height:100%; border-radius:4px 0 0 4px; }
-  .ks-card.ks-橋梁点検::after      { background: #4a82c4; }
+  .ks-card.ks-附属物点検::after     { background: #4a82c4; }
   .ks-card.ks-トンネル点検::after   { background: #2ea860; }
-  .ks-card.ks-附属物点検::after     { background: #d07020; }
+  .ks-card.ks-橋梁点検::after      { background: #d07020; }
   .ks-card.ks-覆工構造物点検::after { background: #8a50c8; }
   .ks-card.ks-その他::after         { background: #999999; }
   .ks-label { font-size: 10px; color: var(--text-muted); }
@@ -1411,7 +1412,7 @@ function buildRowHTML(row, num) {
       <span class="cell-view center">${statusBadge}</span>
       <select data-field="status" class="status ${statusCls(row.status)}">${buildStatusOptions(row.status)}</select>
     </td>
-    <td>
+    <td style="text-align:center;vertical-align:middle">
       <span class="cell-view center koushu-badge koushu-${row.koushu}">${KOUSHU_SHORT[row.koushu]||'--'}</span>
       <select data-field="koushu" class="koushu-sel">${buildKoushuOptions(row.koushu)}</select>
     </td>
@@ -1749,9 +1750,9 @@ function onGoalInput(el) {
 
 // 工種ごとの固有カラー（バッジ・カードと連動）
 const KOUSHU_CARD_COLOR = {
-  '橋梁点検':      { border: '#4a82c4', bg: '#eef5ff', text: '#2a5fa0' },
+  '附属物点検':    { border: '#4a82c4', bg: '#eef5ff', text: '#2a5fa0' },
   'トンネル点検':  { border: '#2ea860', bg: '#edfaf3', text: '#1e7a48' },
-  '附属物点検':    { border: '#d07020', bg: '#fff5ea', text: '#b05a10' },
+  '橋梁点検':      { border: '#d07020', bg: '#fff5ea', text: '#b05a10' },
   '覆工構造物点検':{ border: '#8a50c8', bg: '#f5eeff', text: '#6a3a9a' },
   'その他':        { border: '#999999', bg: '#f4f4f4', text: '#555555' },
 };
@@ -1782,7 +1783,7 @@ function updateKoushuSummary() {
     const col = KOUSHU_CARD_COLOR[k] || { border: '#aaa', bg: '#f4f4f4', text: '#555' };
     const card = document.createElement('div');
     card.className = 'ks-card';
-    card.style.cssText = `border-left: 4px solid ${col.border}; background: ${col.bg};`;
+    card.style.cssText = `border-left: 4px solid ${col.border}; background: #ffffff;`;
     card.innerHTML = `
       <span class="ks-label" style="color:${col.text};font-weight:600">${k}</span>
       <span class="ks-val" style="color:${col.text}">¥${total.toLocaleString()}</span>
