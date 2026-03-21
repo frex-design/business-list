@@ -2120,6 +2120,8 @@ function forceMigrate() {
   showToast('✅ データ移行を実行しました。再読み込みします...');
   setTimeout(() => location.reload(), 1500);
 }
+
+function showToast(msg, isError=false) {
   const t = document.getElementById('toast');
   t.textContent = msg;
   t.className = 'toast show' + (isError ? ' error' : '');
