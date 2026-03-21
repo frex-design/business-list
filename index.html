@@ -7,33 +7,33 @@
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg:        #f4f4f5;
-    --bg2:       #ebebec;
+    --bg:        #fafafa;
+    --bg2:       #f4f4f5;
     --surface:   #ffffff;
-    --surface2:  #f7f7f8;
-    --accent:    #4a82c4;
-    --accent2:   #6a9fd8;
-    --accent3:   #8ab8e8;
-    --gold:      #4a82c4;
-    --rose:      #b05050;
-    --text:      #1a1a1a;
-    --text-mid:  #3a3a3a;
-    --text-muted:#888888;
-    --border:    #d8d8da;
-    --border2:   #e4e4e6;
-    --thead-bg:  #dce8f4;
-    --thead2-bg: #eaf2fa;
-    --row-even:  #f9f9fa;
-    --row-hover: #eaf2fb;
+    --surface2:  #f9f9fa;
+    --accent:    #2563eb;
+    --accent2:   #3b82f6;
+    --accent3:   #bfdbfe;
+    --gold:      #2563eb;
+    --rose:      #ef4444;
+    --text:      #111827;
+    --text-mid:  #374151;
+    --text-muted:#9ca3af;
+    --border:    #e5e7eb;
+    --border2:   #f3f4f6;
+    --thead-bg:  #f9fafb;
+    --thead2-bg: #f3f4f6;
+    --row-even:  #fafafa;
+    --row-hover: #f0f7ff;
     --input-bg:  #ffffff;
-    --success:   #3a70b0;
-    --warning:   #b86820;
-    --danger:    #aa3a3a;
-    --shadow:    rgba(0,0,0,0.06);
+    --success:   #2563eb;
+    --warning:   #d97706;
+    --danger:    #dc2626;
+    --shadow:    rgba(0,0,0,0.04);
 
-    --tab-mid1:  #3a70b0;
-    --tab-mid2:  #6658a8;
-    --tab-final: #aa3a3a;
+    --tab-mid1:  #2563eb;
+    --tab-mid2:  #7c3aed;
+    --tab-final: #dc2626;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -46,30 +46,28 @@
 
   /* HEADER */
   header {
-    background: linear-gradient(135deg, #e8e8ea, #f2f2f4);
-    border-bottom: 2px solid #6a9fd8;
+    background: #ffffff;
+    border-bottom: 1px solid var(--border);
     padding: 14px 24px;
     display: flex; align-items: center; justify-content: space-between;
-    box-shadow: 0 2px 16px var(--shadow);
   }
   .header-left { display: flex; align-items: center; gap: 12px; }
   .header-brand {
-    font-size: 14px; font-weight: 600; color: #4a82c4;
+    font-size: 13px; font-weight: 500; color: var(--text-mid);
     white-space: nowrap; display: flex; align-items: center; gap: 8px;
   }
-  .header-sep { color: var(--border); font-weight: 300; font-size: 18px; }
-  .header-title h1 { font-size: 16px; font-weight: 400; color: var(--text-mid); letter-spacing: 0.04em; }
+  .header-sep { color: var(--border); font-weight: 300; font-size: 16px; }
+  .header-title h1 { font-size: 15px; font-weight: 400; color: var(--text); letter-spacing: 0.05em; }
   .header-title p { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
-  .header-meta { font-size: 12px; color: var(--text-mid); }
-  .header-meta span { color: var(--accent); font-weight: 600; }
+  .header-meta { font-size: 11px; color: var(--text-muted); }
+  .header-meta span { color: var(--text-muted); font-weight: 400; }
 
   /* TOOLBAR */
   .toolbar {
-    background: var(--surface);
-    border-bottom: 1px solid var(--border2);
-    padding: 10px 24px;
-    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
-    box-shadow: 0 1px 6px var(--shadow);
+    background: #fafafa;
+    border-bottom: 1px solid var(--border);
+    padding: 6px 24px;
+    display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
   }
   .btn {
     display: inline-flex; align-items: center; gap: 5px;
@@ -79,17 +77,17 @@
     transition: all 0.18s; white-space: nowrap;
   }
   .btn:disabled { opacity: 0.38; cursor: not-allowed; transform: none !important; }
-  .btn-primary { background: var(--accent); color: white; box-shadow: 0 2px 8px rgba(74,130,196,0.25); }
-  .btn-primary:not(:disabled):hover { background: #3a6aa0; transform: translateY(-1px); }
-  .btn-success { background: #3a70b0; color: white; box-shadow: 0 2px 8px rgba(58,112,176,0.25); }
+  .btn-primary { background: #2563eb; color: white; border-color: #2563eb; font-weight: 500; }
+  .btn-primary:not(:disabled):hover { background: #1d4ed8; border-color: #1d4ed8; }
+  .btn-success { background: #059669; color: white; border-color: #059669; font-weight: 500; }
   .btn-success:not(:disabled):hover { background: #3a6faa; transform: translateY(-1px); }
   .btn-warning { background: var(--warning); color: white; box-shadow: 0 2px 8px rgba(200,150,58,0.25); }
   .btn-warning:not(:disabled):hover { background: #a87828; transform: translateY(-1px); }
-  .btn-edit { background: #4a82c4; color: white; box-shadow: 0 2px 8px rgba(74,130,196,0.25); }
-  .btn-edit:not(:disabled):hover { background: #3a6faa; transform: translateY(-1px); }
-  .btn-danger:not(:disabled):hover  { background: #963838; transform: translateY(-1px); }
+  .btn-edit { background: #2563eb; color: white; border-color: #2563eb; font-weight: 500; }
+  .btn-edit:not(:disabled):hover { background: #1d4ed8; }
+  .btn-danger:not(:disabled):hover  { background: #fef2f2; border-color: var(--danger); }
   .btn-ghost { background: var(--surface2); color: var(--text-mid); border: 1px solid var(--border); }
-  .btn-ghost:not(:disabled):hover { background: var(--row-hover); color: var(--accent); border-color: var(--accent2); }
+  .btn-ghost:not(:disabled):hover { background: var(--row-hover); color: var(--accent); border-color: var(--accent); }
   .sep { width: 1px; height: 26px; background: var(--border); margin: 0 2px; }
 
   /* EDIT BANNER */
@@ -109,32 +107,34 @@
 
   /* ===== TOP STATS BAR（売上 + 目標 横並び） ===== */
   .top-stats-bar {
-    padding: 10px 24px;
+    padding: 12px 24px;
     display: flex; align-items: stretch; gap: 12px; flex-wrap: wrap;
+    background: #fafafa;
+    border-bottom: 1px solid var(--border);
   }
   /* 請負金額合計カード */
   .top-stats-bar .sum-card {
-    background: var(--surface); border: 1px solid var(--border2);
-    border-radius: 8px; padding: 12px 20px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 14px 22px;
     position: relative; overflow: hidden;
-    box-shadow: 0 1px 6px var(--shadow);
+    box-shadow: none;
     min-width: 220px; flex-shrink: 0;
     display: flex; flex-direction: column; justify-content: center;
   }
   .top-stats-bar .sum-card::after {
     content: ''; position: absolute; bottom: 0; left: 0; width: 100%; height: 3px;
   }
-  .top-stats-bar .sum-card.c3::after { background: #3a70b0; }
+  .top-stats-bar .sum-card.c3::after { background: linear-gradient(90deg, #2563eb, #7c3aed); height: 3px; }
   .top-stats-bar .sum-card label { font-size: 10px; color: var(--text-muted); display: block; margin-bottom: 4px; }
-  .top-stats-bar .sum-card .val { font-size: 20px; font-weight: 700; color: #3a70b0; }
+  .top-stats-bar .sum-card .val { font-size: 22px; font-weight: 700; color: #2563eb; }
 
   /* 目標売上達成率カード */
   .goal-card {
-    background: var(--surface); border: 1px solid var(--border2);
-    border-radius: 8px; padding: 10px 16px;
-    box-shadow: 0 1px 6px var(--shadow);
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 10px 18px;
+    box-shadow: none;
     display: flex; align-items: center; gap: 14px;
-    border-bottom: 3px solid #4a82c4;
+    border-bottom: 3px solid #2563eb;
     flex-shrink: 0;
   }
   .goal-card-left { flex-shrink: 0; }
@@ -147,10 +147,10 @@
     display: flex; align-items: center; justify-content: center;
     pointer-events: none;
   }
-  .goal-rate { font-size: 10px; font-weight: 400; color: var(--accent); }
+  .goal-rate { font-size: 10px; font-weight: 600; color: #2563eb; }
 
   .goal-card-mid { display: flex; flex-direction: column; gap: 4px; min-width: 150px; }
-  .goal-label { font-size: 11px; font-weight: 700; color: var(--accent); }
+  .goal-label { font-size: 11px; font-weight: 700; color: #2563eb; letter-spacing: 0.04em; }
   .goal-input-row { display: flex; align-items: center; gap: 4px; }
   .goal-prefix, .goal-suffix { font-size: 11px; color: var(--text-mid); font-weight: 600; }
   .goal-card-mid input {
@@ -161,7 +161,7 @@
     background: var(--surface2); outline: none; text-align: right;
     transition: border-color 0.2s;
   }
-  .goal-card-mid input:focus { border-color: var(--accent2); box-shadow: 0 0 0 2px rgba(74,130,196,0.12); }
+  .goal-card-mid input:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(37,99,235,0.15); }
   .goal-sub { font-size: 10px; color: var(--text-muted); }
 
   .goal-card-right { display: flex; gap: 8px; flex-wrap: wrap; }
@@ -180,9 +180,9 @@
   /* ===== 年度セレクター（プルダウン版） ===== */
   .year-selector {
     display: flex; align-items: center; gap: 10px;
-    padding: 7px 24px;
-    background: var(--surface2);
-    border-bottom: 1px solid var(--border2);
+    padding: 8px 24px;
+    background: #fafafa;
+    border-bottom: 1px solid var(--border);
   }
   .year-selector-label { font-size: 11px; color: var(--text-muted); font-weight: 600; white-space: nowrap; }
   .year-select {
@@ -202,7 +202,7 @@
     transition: border-color 0.15s;
     min-width: 180px;
   }
-  .year-select:focus { border-color: var(--accent2); box-shadow: 0 0 0 2px rgba(74,130,196,0.12); }
+  .year-select:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(37,99,235,0.15); }
   .year-add-btn {
     display: flex; align-items: center; gap: 4px;
     padding: 5px 12px; border-radius: 6px;
@@ -227,14 +227,14 @@
   /* ===== TABS ===== */
   .tab-bar {
     padding: 0 24px;
-    display: flex; align-items: flex-end; gap: 4px;
+    display: flex; align-items: flex-end; gap: 2px;
     background: var(--surface);
-    border-bottom: 3px solid #4a82c4;
+    border-bottom: 2px solid #e2e8f0;
     margin-top: 0;
   }
   .tab-btn {
     padding: 10px 22px;
-    border: 2px solid var(--border); border-bottom: none;
+    border: 2px solid var(--border); border-bottom: 1px solid var(--border);
     border-radius: 8px 8px 0 0;
     background: var(--bg2); color: var(--text-muted);
     font-family: 'Noto Sans JP', sans-serif;
@@ -246,14 +246,14 @@
   }
   .tab-btn:hover { background: var(--row-hover); color: var(--text-mid); border-color: var(--accent2); }
   .tab-btn.active {
-    background: #4a82c4;
-    border-color: #4a82c4;
-    border-bottom: 3px solid #4a82c4;
+    background: #2563eb;
+    border-color: #2563eb;
+    border-bottom: 3px solid #2563eb;
     font-weight: 700; color: white;
-    box-shadow: 0 -3px 10px rgba(74,130,196,0.18);
+    box-shadow: 0 -2px 12px rgba(37,99,235,0.25);
   }
-  .tab-btn.t-pay.active  { background: #4a82c4; border-color: #4a82c4; color: white; }
-  .tab-btn.t-prog.active { background: #4a82c4; border-color: #4a82c4; color: white; }
+  .tab-btn.t-pay.active  { background: #2563eb; border-color: #2563eb; color: white; }
+  .tab-btn.t-prog.active { background: #2563eb; border-color: #2563eb; color: white; }
   .tab-bar-sep { border-bottom: 3px solid #4a82c4 !important; }
   .tab-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
   .t-main .tab-dot { background: var(--accent); }
@@ -311,7 +311,7 @@
   .table-container {
     background: var(--surface);
     border: 1px solid var(--border); border-radius: 10px;
-    overflow: hidden; box-shadow: 0 4px 20px var(--shadow);
+    overflow: hidden; box-shadow: none; border: 1px solid var(--border);
   }
   .table-container.main-tbl { min-width: 1320px; }
   .table-container.pay-tbl  { min-width: 700px; }
@@ -319,7 +319,7 @@
   thead th {
     padding: 9px 8px; font-size: 11px; font-weight: 700;
     color: var(--accent); text-align: center;
-    border-bottom: 2px solid #6a9fd8;
+    border-bottom: 1px solid var(--border);
     border-right: 1px solid var(--border);
     white-space: nowrap; position: sticky; top: 0;
     background: var(--thead-bg); z-index: 5;
@@ -363,11 +363,11 @@
 
   /* 編集モード テーブル装飾 */
   body.edit-mode .table-container { border-color: var(--warning); }
-  body.edit-mode thead th { background: #f0f0f2; color: #1a1a1a; border-bottom-color: var(--warning); }
-  body.edit-mode .th-group { background: #deeaf8 !important; color: #1a1a1a !important; }
+  body.edit-mode thead th { background: #f8fafc; color: #1a1a1a; border-bottom-color: var(--warning); }
+  body.edit-mode .th-group { background: #eff6ff !important; color: #1e3a5f !important; }
   body.edit-mode tbody tr:nth-child(odd)  { background: #fdfaf6; }
-  body.edit-mode tbody tr:nth-child(even) { background: #f0f0f2; }
-  body.edit-mode tbody tr:hover { background: #f0f0f2; }
+  body.edit-mode tbody tr:nth-child(even) { background: #f8fafc; }
+  body.edit-mode tbody tr:hover { background: #f8fafc; }
 
   /* VIEW / EDIT セル */
   .cell-view {
@@ -410,7 +410,7 @@
   .sb-見積書提出済 { color: var(--warning); border-color: #e8b870; background: #f4f4f6; }
   .sb-契約済       { color: var(--success); border-color: #8abe9e; background: #f0faf4; }
   .sb-中間請求済   { color: #4a9ab0; border-color: #7ac0d8; background: #f0faf6; }
-  .sb-納品請求済   { color: var(--accent); border-color: var(--accent2); background: #f0f0f2; }
+  .sb-納品請求済   { color: var(--accent); border-color: var(--accent2); background: #f8fafc; }
   .sb-変更契約待   { color: #b07a30; border-color: #d09050; background: #fef8f0; }
   .sb-最終契約待   { color: #9060c0; border-color: #b090d8; background: #f8f4fc; }
   .sb-その他       { color: var(--text-muted); border-color: var(--border); background: #f5faf6; }
@@ -529,64 +529,84 @@
   }
   body.edit-mode .prog-header-note { display: none; }
 
-  .prog-cards { display: flex; flex-direction: column; gap: 12px; }
+  /* 進捗パネル上部バー */
+  .prog-top-bar {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 12px; gap: 12px; flex-wrap: wrap;
+  }
+  .prog-updated-row {
+    display: flex; align-items: center; gap: 6px;
+  }
+  .prog-updated-label { font-size: 11px; color: var(--text-muted); }
+  .prog-updated-view {
+    font-size: 11px; color: var(--text-mid); font-weight: 500; min-width: 80px;
+  }
+  .prog-updated-input {
+    display: none !important;
+    padding: 3px 8px !important; font-size: 11px !important;
+    border: 1px solid var(--border) !important; border-radius: 4px !important;
+    color: var(--text) !important; width: 110px !important;
+    background: var(--surface) !important;
+  }
+  body.edit-mode .prog-updated-view  { display: none; }
+  body.edit-mode .prog-updated-input { display: block !important; }
+
+  /* 2列グリッド */
+  .prog-cards {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+  }
 
   .prog-card {
     background: var(--surface);
-    border: 1px solid var(--border2);
+    border: 1px solid var(--border);
     border-radius: 10px;
-    padding: 16px 20px;
-    box-shadow: 0 1px 6px var(--shadow);
+    padding: 14px 16px;
   }
   .prog-card-header {
-    display: flex; align-items: baseline; gap: 12px;
-    margin-bottom: 14px; flex-wrap: wrap;
+    margin-bottom: 12px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border2);
   }
-  .prog-card-name {
-    font-size: 14px; font-weight: 700; color: var(--text);
+  .prog-card-title-row {
+    display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    margin-bottom: 2px;
   }
-  .prog-card-sub {
-    font-size: 11px; color: var(--text-muted);
-  }
-  .prog-card-status {
-    margin-left: auto;
-  }
+  .prog-card-name  { font-size: 12px; font-weight: 500; color: var(--text); }
+  .prog-card-sub   { font-size: 10px; color: var(--text-mid); }
+  .prog-card-status { flex-shrink: 0; }
 
-  .prog-items { display: flex; flex-direction: column; gap: 10px; }
-  .prog-item { display: flex; align-items: center; gap: 12px; }
-  .prog-item-label {
-    font-size: 12px; font-weight: 600; color: var(--text-mid);
-    width: 90px; flex-shrink: 0;
+  /* 細ライン */
+  .prog-lines { display: flex; flex-direction: column; gap: 8px; }
+  .prog-line-row { display: flex; align-items: center; gap: 8px; }
+  .prog-line-label {
+    font-size: 10px; color: var(--text-mid);
+    width: 70px; flex-shrink: 0;
   }
-  .prog-bar-wrap {
-    flex: 1; background: var(--bg2);
-    border-radius: 20px; height: 16px;
-    overflow: hidden; position: relative;
+  .prog-line-track {
+    flex: 1; height: 2px; background: #ebebec;
+    border-radius: 1px; overflow: hidden;
   }
-  .prog-bar-fill {
-    height: 100%; border-radius: 20px;
+  .prog-line-fill {
+    height: 100%; border-radius: 1px;
     transition: width 0.4s ease;
-    position: relative;
   }
-  .prog-bar-fill.p-survey  { background: linear-gradient(90deg, #d2b48c, #b8966e); }
-  .prog-bar-fill.p-inspect { background: linear-gradient(90deg, #8ac8e8, #5aaad8); }
-  .prog-bar-fill.p-damage  { background: linear-gradient(90deg, #f0b87a, #d8884a); }
-  .prog-bar-fill.p-report  { background: linear-gradient(90deg, #c8a0d8, #9870b8); }
-
-  .prog-pct-view {
-    font-size: 12px; font-weight: 700; color: var(--text);
-    width: 40px; text-align: right; flex-shrink: 0;
+  .prog-line-pct {
+    font-size: 11px; font-weight: 500;
+    width: 32px; text-align: right; flex-shrink: 0;
   }
   .prog-pct-input {
     display: none !important;
-    width: 60px !important; padding: 3px 6px !important;
+    width: 44px !important; padding: 2px 4px !important;
     text-align: right !important;
-    font-size: 12px !important; font-weight: 600 !important;
-    border-radius: 4px !important;
+    font-size: 11px !important; font-weight: 400 !important;
+    border-radius: 3px !important;
     border: 1px solid var(--border) !important;
   }
-  body.edit-mode .prog-pct-view   { display: none !important; }
-  body.edit-mode .prog-pct-input  { display: block !important; }
+  body.edit-mode .prog-line-pct  { display: none !important; }
+  body.edit-mode .prog-pct-input { display: inline-block !important; }
+
 
   /* ===== リスト管理モーダル ===== */
   .list-modal {
@@ -620,7 +640,7 @@
     background: var(--surface2); color: var(--text); outline: none;
     transition: border-color 0.18s;
   }
-  .list-add-row input:focus { border-color: var(--accent2); box-shadow: 0 0 0 2px rgba(74,130,196,0.12); }
+  .list-add-row input:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(37,99,235,0.15); }
 
   .list-items { display: flex; flex-direction: column; gap: 6px; }
   .list-item {
@@ -680,11 +700,11 @@
     align-items: stretch;
   }
   .ks-card {
-    background: var(--surface); border: 1px solid var(--border2);
-    border-radius: 8px; padding: 8px 14px;
+    background: #ffffff; border: 1px solid var(--border);
+    border-radius: 10px; padding: 8px 14px;
     display: flex; flex-direction: column; gap: 2px;
-    box-shadow: 0 1px 4px var(--shadow); min-width: 110px;
-    position: relative; overflow: hidden;
+    box-shadow: none;
+    min-width: 110px; position: relative; overflow: hidden;
   }
   .ks-card::after { content:''; position:absolute; left:0; top:0; width:4px; height:100%; border-radius:4px 0 0 4px; }
   .ks-card.ks-附属物点検::after     { background: #4a82c4; }
@@ -873,7 +893,16 @@
 <!-- ===== PANEL: 業務進捗 ===== -->
 <div class="tab-panel" id="panel-prog">
   <div class="prog-wrap">
-    <div class="prog-header-note">✏️ 編集モードにすると進捗率を入力できます</div>
+    <div class="prog-top-bar">
+      <div class="prog-header-note">✏️ 編集モードにすると進捗率を入力できます</div>
+      <div class="prog-updated-row">
+        <span class="prog-updated-label">更新日：</span>
+        <span class="prog-updated-view" id="progUpdatedView"></span>
+        <input type="text" class="prog-updated-input" id="progUpdatedInput"
+          placeholder="例）2026/03/22"
+          oninput="saveProgUpdated(this.value)">
+      </div>
+    </div>
     <div id="progCards" class="prog-cards"></div>
     <div id="noDataProg" class="no-data" style="display:none;">
       <span>📊</span>業務一覧タブで業務を追加してください。
@@ -1299,7 +1328,7 @@ function makeEmptyRow() {
     mid2month:'', mid2amount:'',
     finalmonth:'',
     qty:'', staff:'', koushu:'',
-    prog_survey:0, prog_inspect:0, prog_damage:0, prog_report:0
+    prog_survey:0, prog_matome:0, prog_inspect:0, prog_damage:0, prog_report:0
   };
 }
 
@@ -1580,11 +1609,20 @@ function renderProgPanel() {
   noData.style.display = 'none';
 
   const progDefs = [
-    { key: 'prog_survey',  label: '現地踏査',   cls: 'p-survey'  },
-    { key: 'prog_inspect', label: '定期点検',   cls: 'p-inspect' },
-    { key: 'prog_damage',  label: '損傷図作成', cls: 'p-damage'  },
-    { key: 'prog_report',  label: '調書作成',   cls: 'p-report'  },
+    { key: 'prog_survey',  label: '現地踏査',   color: '#d2b48c' },
+    { key: 'prog_matome',  label: '踏査まとめ', color: '#a08060' },
+    { key: 'prog_inspect', label: '定期点検',   color: '#60a5fa' },
+    { key: 'prog_damage',  label: '損傷図作成', color: '#fb923c' },
+    { key: 'prog_report',  label: '調書作成',   color: '#a78bfa' },
   ];
+
+  // 更新日を読み込んで表示
+  const updatedKey = `flexdesign_prog_updated_${activeYear}`;
+  const savedDate = localStorage.getItem(updatedKey) || '';
+  const viewEl  = document.getElementById('progUpdatedView');
+  const inputEl = document.getElementById('progUpdatedInput');
+  if (viewEl)  viewEl.textContent = savedDate || '未設定';
+  if (inputEl) inputEl.value = savedDate;
 
   active.forEach(row => {
     const badge = row.status
@@ -1593,31 +1631,33 @@ function renderProgPanel() {
     const card = document.createElement('div');
     card.className = 'prog-card';
 
-    const header = `
-      <div class="prog-card-header">
-        <span class="prog-card-name">${esc(row.name) || '（業務名未入力）'}</span>
-        <span class="prog-card-sub">${esc(row.customer)}${row.orderer ? '　' + esc(row.orderer) : ''}</span>
-        <span class="prog-card-status">${badge}</span>
-      </div>`;
-
-    const items = progDefs.map(def => {
+    const lines = progDefs.map(def => {
       const val = Math.min(100, Math.max(0, Number(row[def.key]) || 0));
-      const color = val >= 100 ? '#4a82c4' : val >= 50 ? 'var(--accent)' : 'var(--text-mid)';
       return `
-        <div class="prog-item">
-          <span class="prog-item-label">${def.label}</span>
-          <div class="prog-bar-wrap">
-            <div class="prog-bar-fill ${def.cls}" style="width:${val}%"></div>
+        <div class="prog-line-row">
+          <span class="prog-line-label">${def.label}</span>
+          <div class="prog-line-track">
+            <div class="prog-line-fill" style="width:${val}%;background:${def.color}"></div>
           </div>
-          <span class="prog-pct-view" style="color:${color}">${val}%</span>
+          <span class="prog-line-pct" style="color:${def.color}">${val}%</span>
           <input type="number" class="prog-pct-input"
             min="0" max="100" value="${val}"
             data-rowid="${row.id}" data-field="${def.key}"
-            oninput="updateProgField(this)">
+            oninput="updateProgField(this)"
+            style="color:${def.color}">
         </div>`;
     }).join('');
 
-    card.innerHTML = header + `<div class="prog-items">${items}</div>`;
+    card.innerHTML = `
+      <div class="prog-card-header">
+        <div class="prog-card-title-row">
+          <span class="prog-card-name">${esc(row.name) || '（業務名未入力）'}</span>
+          <span class="prog-card-status">${badge}</span>
+        </div>
+        <span class="prog-card-sub">${esc(row.customer)}${row.orderer ? '　' + esc(row.orderer) : ''}</span>
+      </div>
+      <div class="prog-lines">${lines}</div>`;
+
     wrap.appendChild(card);
   });
 }
@@ -1628,19 +1668,22 @@ function updateProgField(el) {
   const row    = rows.find(r => r.id === rowId);
   if (!row) return;
 
-  let val = Math.min(100, Math.max(0, Number(el.value) || 0));
+  const val = Math.min(100, Math.max(0, Number(el.value) || 0));
   row[field] = val;
 
-  // バーとview数値をリアルタイム更新
-  const card = el.closest('.prog-card');
-  const item = el.closest('.prog-item');
-  const fill  = item.querySelector('.prog-bar-fill');
-  const view  = item.querySelector('.prog-pct-view');
+  const lineRow = el.closest('.prog-line-row');
+  if (!lineRow) return;
+  const fill = lineRow.querySelector('.prog-line-fill');
+  const pct  = lineRow.querySelector('.prog-line-pct');
   if (fill) fill.style.width = val + '%';
-  if (view) {
-    view.textContent = val + '%';
-    view.style.color = val >= 100 ? '#4a82c4' : val >= 50 ? 'var(--accent)' : 'var(--text-mid)';
-  }
+  if (pct)  pct.textContent = val + '%';
+}
+
+function saveProgUpdated(val) {
+  const key = `flexdesign_prog_updated_${activeYear}`;
+  localStorage.setItem(key, val);
+  const viewEl = document.getElementById('progUpdatedView');
+  if (viewEl) viewEl.textContent = val || '未設定';
 }
 
 function statusBadgeHtml(status) {
