@@ -1,0 +1,2134 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>業務請負一覧表 | 株式会社フレックスデザイン</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:        #f4f4f5;
+    --bg2:       #ebebec;
+    --surface:   #ffffff;
+    --surface2:  #f7f7f8;
+    --accent:    #4a82c4;
+    --accent2:   #6a9fd8;
+    --accent3:   #8ab8e8;
+    --gold:      #4a82c4;
+    --rose:      #b05050;
+    --text:      #1a1a1a;
+    --text-mid:  #3a3a3a;
+    --text-muted:#888888;
+    --border:    #d8d8da;
+    --border2:   #e4e4e6;
+    --thead-bg:  #dce8f4;
+    --thead2-bg: #eaf2fa;
+    --row-even:  #f9f9fa;
+    --row-hover: #eaf2fb;
+    --input-bg:  #ffffff;
+    --success:   #3a70b0;
+    --warning:   #b86820;
+    --danger:    #aa3a3a;
+    --shadow:    rgba(0,0,0,0.06);
+
+    --tab-mid1:  #3a70b0;
+    --tab-mid2:  #6658a8;
+    --tab-final: #aa3a3a;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Noto Sans JP', 'Zen Kaku Gothic New', sans-serif;
+    min-height: 100vh;
+    font-size: 13px;
+  }
+
+  /* HEADER */
+  header {
+    background: linear-gradient(135deg, #e8e8ea, #f2f2f4);
+    border-bottom: 2px solid #6a9fd8;
+    padding: 14px 24px;
+    display: flex; align-items: center; justify-content: space-between;
+    box-shadow: 0 2px 16px var(--shadow);
+  }
+  .header-left { display: flex; align-items: center; gap: 12px; }
+  .header-brand {
+    font-size: 14px; font-weight: 600; color: #4a82c4;
+    white-space: nowrap; display: flex; align-items: center; gap: 8px;
+  }
+  .header-sep { color: var(--border); font-weight: 300; font-size: 18px; }
+  .header-title h1 { font-size: 16px; font-weight: 400; color: var(--text-mid); letter-spacing: 0.04em; }
+  .header-title p { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+  .header-meta { font-size: 12px; color: var(--text-mid); }
+  .header-meta span { color: var(--accent); font-weight: 600; }
+
+  /* TOOLBAR */
+  .toolbar {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border2);
+    padding: 10px 24px;
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    box-shadow: 0 1px 6px var(--shadow);
+  }
+  .btn {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 7px 14px; border-radius: 6px; border: none;
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 12px; font-weight: 500; cursor: pointer;
+    transition: all 0.18s; white-space: nowrap;
+  }
+  .btn:disabled { opacity: 0.38; cursor: not-allowed; transform: none !important; }
+  .btn-primary { background: var(--accent); color: white; box-shadow: 0 2px 8px rgba(74,130,196,0.25); }
+  .btn-primary:not(:disabled):hover { background: #3a6aa0; transform: translateY(-1px); }
+  .btn-success { background: #3a70b0; color: white; box-shadow: 0 2px 8px rgba(58,112,176,0.25); }
+  .btn-success:not(:disabled):hover { background: #3a6faa; transform: translateY(-1px); }
+  .btn-warning { background: var(--warning); color: white; box-shadow: 0 2px 8px rgba(200,150,58,0.25); }
+  .btn-warning:not(:disabled):hover { background: #a87828; transform: translateY(-1px); }
+  .btn-edit { background: #4a82c4; color: white; box-shadow: 0 2px 8px rgba(74,130,196,0.25); }
+  .btn-edit:not(:disabled):hover { background: #3a6faa; transform: translateY(-1px); }
+  .btn-danger:not(:disabled):hover  { background: #963838; transform: translateY(-1px); }
+  .btn-ghost { background: var(--surface2); color: var(--text-mid); border: 1px solid var(--border); }
+  .btn-ghost:not(:disabled):hover { background: var(--row-hover); color: var(--accent); border-color: var(--accent2); }
+  .sep { width: 1px; height: 26px; background: var(--border); margin: 0 2px; }
+
+  /* EDIT BANNER */
+  .edit-banner {
+    display: none; background: #f4f4f6;
+    border-bottom: 2px solid var(--warning);
+    padding: 8px 24px; font-size: 12px; color: var(--warning);
+    font-weight: 600; align-items: center; gap: 8px;
+  }
+  .edit-banner.show { display: flex; }
+  .edit-banner-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--warning);
+    animation: blink 1s ease-in-out infinite;
+  }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+  /* ===== TOP STATS BAR（売上 + 目標 横並び） ===== */
+  .top-stats-bar {
+    padding: 10px 24px;
+    display: flex; align-items: stretch; gap: 12px; flex-wrap: wrap;
+  }
+  /* 請負金額合計カード */
+  .top-stats-bar .sum-card {
+    background: var(--surface); border: 1px solid var(--border2);
+    border-radius: 8px; padding: 12px 20px;
+    position: relative; overflow: hidden;
+    box-shadow: 0 1px 6px var(--shadow);
+    min-width: 220px; flex-shrink: 0;
+    display: flex; flex-direction: column; justify-content: center;
+  }
+  .top-stats-bar .sum-card::after {
+    content: ''; position: absolute; bottom: 0; left: 0; width: 100%; height: 3px;
+  }
+  .top-stats-bar .sum-card.c3::after { background: #3a70b0; }
+  .top-stats-bar .sum-card label { font-size: 10px; color: var(--text-muted); display: block; margin-bottom: 4px; }
+  .top-stats-bar .sum-card .val { font-size: 20px; font-weight: 700; color: #3a70b0; }
+
+  /* 目標売上達成率カード */
+  .goal-card {
+    background: var(--surface); border: 1px solid var(--border2);
+    border-radius: 8px; padding: 10px 16px;
+    box-shadow: 0 1px 6px var(--shadow);
+    display: flex; align-items: center; gap: 14px;
+    border-bottom: 3px solid #4a82c4;
+    flex-shrink: 0;
+  }
+  .goal-card-left { flex-shrink: 0; }
+  .goal-canvas-wrap {
+    position: relative; width: 72px; height: 72px;
+  }
+  .goal-canvas-wrap canvas { position: absolute; top: 0; left: 0; }
+  .goal-chart-center {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    pointer-events: none;
+  }
+  .goal-rate { font-size: 10px; font-weight: 400; color: var(--accent); }
+
+  .goal-card-mid { display: flex; flex-direction: column; gap: 4px; min-width: 150px; }
+  .goal-label { font-size: 11px; font-weight: 700; color: var(--accent); }
+  .goal-input-row { display: flex; align-items: center; gap: 4px; }
+  .goal-prefix, .goal-suffix { font-size: 11px; color: var(--text-mid); font-weight: 600; }
+  .goal-card-mid input {
+    display: block !important;
+    width: 90px; padding: 5px 7px;
+    border: 1px solid var(--border); border-radius: 5px;
+    font-size: 12px; font-weight: 400; color: var(--text);
+    background: var(--surface2); outline: none; text-align: right;
+    transition: border-color 0.2s;
+  }
+  .goal-card-mid input:focus { border-color: var(--accent2); box-shadow: 0 0 0 2px rgba(74,130,196,0.12); }
+  .goal-sub { font-size: 10px; color: var(--text-muted); }
+
+  .goal-card-right { display: flex; gap: 8px; flex-wrap: wrap; }
+  .goal-detail-item {
+    display: flex; flex-direction: column; gap: 2px;
+    padding: 5px 10px; background: var(--surface2);
+    border-radius: 6px; border: 1px solid var(--border2);
+    min-width: 100px;
+  }
+  .goal-detail-label { font-size: 10px; color: var(--text-muted); }
+  .goal-detail-val { font-size: 13px; font-weight: 700; color: var(--text); }
+  .goal-detail-val.accent  { color: var(--accent); }
+  .goal-detail-val.rose    { color: var(--rose); }
+  .goal-detail-val.success { color: var(--success); }
+
+  /* ===== 年度セレクター（プルダウン版） ===== */
+  .year-selector {
+    display: flex; align-items: center; gap: 10px;
+    padding: 7px 24px;
+    background: var(--surface2);
+    border-bottom: 1px solid var(--border2);
+  }
+  .year-selector-label { font-size: 11px; color: var(--text-muted); font-weight: 600; white-space: nowrap; }
+  .year-select {
+    display: block !important;
+    padding: 5px 28px 5px 10px;
+    border: 1.5px solid var(--border);
+    border-radius: 6px;
+    background: var(--surface);
+    color: var(--text);
+    font-size: 12px; font-weight: 600;
+    font-family: 'Noto Sans JP', sans-serif;
+    cursor: pointer; outline: none;
+    appearance: none; -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23888'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+    transition: border-color 0.15s;
+    min-width: 180px;
+  }
+  .year-select:focus { border-color: var(--accent2); box-shadow: 0 0 0 2px rgba(74,130,196,0.12); }
+  .year-add-btn {
+    display: flex; align-items: center; gap: 4px;
+    padding: 5px 12px; border-radius: 6px;
+    border: 1.5px dashed var(--accent2);
+    background: transparent; color: var(--accent);
+    font-size: 11px; font-weight: 600; cursor: pointer;
+    transition: all 0.15s;
+    font-family: 'Noto Sans JP', sans-serif; white-space: nowrap;
+  }
+  .year-add-btn:hover { background: var(--row-hover); border-color: var(--accent); }
+  .year-del-btn {
+    display: flex; align-items: center; gap: 4px;
+    padding: 5px 10px; border-radius: 6px;
+    border: 1px solid var(--border);
+    background: transparent; color: var(--text-muted);
+    font-size: 11px; cursor: pointer;
+    transition: all 0.15s;
+    font-family: 'Noto Sans JP', sans-serif; white-space: nowrap;
+  }
+  .year-del-btn:hover { border-color: var(--danger); color: var(--danger); background: #fdf0f0; }
+
+  /* ===== TABS ===== */
+  .tab-bar {
+    padding: 0 24px;
+    display: flex; align-items: flex-end; gap: 4px;
+    background: var(--surface);
+    border-bottom: 3px solid #4a82c4;
+    margin-top: 0;
+  }
+  .tab-btn {
+    padding: 10px 22px;
+    border: 2px solid var(--border); border-bottom: none;
+    border-radius: 8px 8px 0 0;
+    background: var(--bg2); color: var(--text-muted);
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 12px; font-weight: 500;
+    cursor: pointer; transition: all 0.15s;
+    display: flex; align-items: center; gap: 7px;
+    white-space: nowrap;
+    position: relative; bottom: -3px;
+  }
+  .tab-btn:hover { background: var(--row-hover); color: var(--text-mid); border-color: var(--accent2); }
+  .tab-btn.active {
+    background: #4a82c4;
+    border-color: #4a82c4;
+    border-bottom: 3px solid #4a82c4;
+    font-weight: 700; color: white;
+    box-shadow: 0 -3px 10px rgba(74,130,196,0.18);
+  }
+  .tab-btn.t-pay.active  { background: #4a82c4; border-color: #4a82c4; color: white; }
+  .tab-btn.t-prog.active { background: #4a82c4; border-color: #4a82c4; color: white; }
+  .tab-bar-sep { border-bottom: 3px solid #4a82c4 !important; }
+  .tab-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .t-main .tab-dot { background: var(--accent); }
+  .t-pay  .tab-dot { background: var(--tab-mid1); }
+  .tab-btn.active .tab-dot { background: rgba(255,255,255,0.8); }
+  .tab-btn:not(.active) .tab-dot { opacity: 0.35; }
+
+  /* タブバー右側アクションボタン */
+  .tab-bar-actions {
+    margin-left: auto;
+    display: flex; align-items: center; gap: 6px;
+    padding-bottom: 3px;
+  }
+  .tab-bar-actions .btn { padding: 6px 12px; font-size: 11px; }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* パネル共通：固定高さ＋内部スクロール */
+  .panel-scroll {
+    height: calc(100vh - 340px);
+    overflow-y: auto;
+    overflow-x: auto;
+    padding: 16px 24px;
+    box-sizing: border-box;
+  }
+  /* 業務進捗パネル */
+  .prog-wrap {
+    height: calc(100vh - 340px);
+    overflow-y: auto;
+    padding: 16px 24px;
+    box-sizing: border-box;
+  }
+  /* 支払管理：テーブル＋合計バーをflex縦並び */
+  .pay-panel-wrap {
+    height: calc(100vh - 340px);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .pay-panel-scroll {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: auto;
+    padding: 16px 24px 8px;
+    box-sizing: border-box;
+  }
+  .pay-totals-bar-fixed {
+    flex-shrink: 0;
+    border-top: 1px solid var(--border2);
+  }
+
+  /* TABLE SHARED */
+  .table-wrap { padding: 0; overflow-x: auto; }
+  .table-container {
+    background: var(--surface);
+    border: 1px solid var(--border); border-radius: 10px;
+    overflow: hidden; box-shadow: 0 4px 20px var(--shadow);
+  }
+  .table-container.main-tbl { min-width: 1320px; }
+  .table-container.pay-tbl  { min-width: 700px; }
+  table { width: 100%; border-collapse: collapse; }
+  thead th {
+    padding: 9px 8px; font-size: 11px; font-weight: 700;
+    color: var(--accent); text-align: center;
+    border-bottom: 2px solid #6a9fd8;
+    border-right: 1px solid var(--border);
+    white-space: nowrap; position: sticky; top: 0;
+    background: var(--thead-bg); z-index: 5;
+  }
+  thead th:last-child { border-right: none; }
+  .th-group {
+    background: var(--thead2-bg) !important;
+    color: var(--accent) !important;
+    font-size: 10px !important; font-weight: 500 !important;
+  }
+  tbody tr { border-bottom: 1px solid var(--border2); transition: background 0.12s; }
+  tbody tr:nth-child(even) { background: var(--row-even); }
+  tbody tr:hover { background: var(--row-hover); }
+  tbody td { padding: 5px 5px; border-right: 1px solid var(--border2); vertical-align: middle; }
+  tbody td:last-child { border-right: none; }
+
+  /* 支払テーブルのテーマカラー */
+  .th-pay1 { background: #daeaf8 !important; color: #3a70b0 !important; font-size: 10px !important; font-weight: 600 !important; }
+  .th-pay2 { background: #e8e4f5 !important; color: var(--tab-mid2) !important; font-size: 10px !important; font-weight: 600 !important; }
+  .th-payf { background: #f5e4e4 !important; color: var(--tab-final) !important; font-size: 10px !important; font-weight: 600 !important; }
+
+  /* 合計バー */
+  .pay-totals-bar {
+    display: flex; gap: 12px; padding: 12px 24px 24px;
+    flex-wrap: wrap;
+  }
+  .pay-total-item {
+    display: flex; align-items: center; gap: 10px;
+    background: var(--surface); border: 1px solid var(--border2);
+    border-radius: 8px; padding: 10px 16px;
+    box-shadow: 0 1px 6px var(--shadow); flex: 1; min-width: 180px;
+  }
+  .pay-total-label { font-size: 11px; color: var(--text-muted); }
+  .pay-total-val { font-size: 17px; font-weight: 700; margin-left: auto; }
+  .mid1-total .pay-total-val  { color: #3a70b0; }
+  .mid2-total .pay-total-val  { color: var(--tab-mid2); }
+  .final-total .pay-total-val { color: var(--tab-final); }
+  .mid1-total  { border-bottom: 3px solid var(--tab-mid1); }
+  .mid2-total  { border-bottom: 3px solid var(--tab-mid2); }
+  .final-total { border-bottom: 3px solid var(--tab-final); }
+
+  /* 編集モード テーブル装飾 */
+  body.edit-mode .table-container { border-color: var(--warning); }
+  body.edit-mode thead th { background: #f0f0f2; color: #1a1a1a; border-bottom-color: var(--warning); }
+  body.edit-mode .th-group { background: #deeaf8 !important; color: #1a1a1a !important; }
+  body.edit-mode tbody tr:nth-child(odd)  { background: #fdfaf6; }
+  body.edit-mode tbody tr:nth-child(even) { background: #f0f0f2; }
+  body.edit-mode tbody tr:hover { background: #f0f0f2; }
+
+  /* VIEW / EDIT セル */
+  .cell-view {
+    display: block; padding: 5px 6px; min-height: 28px;
+    font-size: 12px; color: var(--text);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .cell-view.num   { text-align: right; font-variant-numeric: tabular-nums; }
+  .cell-view.settle-view { color: var(--accent); font-weight: 700; text-align: right; }
+  .cell-view.final-view  { color: var(--rose);   font-weight: 700; text-align: right; }
+  .cell-view.empty { color: var(--text-muted); font-style: italic; }
+
+  select, input[type="text"], input[type="number"] {
+    display: none;
+    width: 100%; background: var(--input-bg);
+    border: 1px solid var(--accent2); border-radius: 4px;
+    color: var(--text); padding: 5px 6px;
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 12px; outline: none;
+    transition: border-color 0.18s, box-shadow 0.18s;
+    min-width: 0;
+  }
+  select:focus, input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px rgba(74,123,181,0.15);
+  }
+  input[type="number"] { text-align: right; }
+
+  body.edit-mode .cell-view { display: none; }
+  body.edit-mode select,
+  body.edit-mode input[type="text"],
+  body.edit-mode input[type="number"] { display: block; }
+
+  /* status badge */
+  .status-badge {
+    display: inline-block; padding: 2px 8px; border-radius: 10px;
+    font-size: 11px; font-weight: 500; border: 1px solid currentColor;
+  }
+  .sb-見積書作成中 { color: var(--text-mid); border-color: var(--border); background: #f5faf6; }
+  .sb-見積書提出済 { color: var(--warning); border-color: #e8b870; background: #f4f4f6; }
+  .sb-契約済       { color: var(--success); border-color: #8abe9e; background: #f0faf4; }
+  .sb-中間請求済   { color: #4a9ab0; border-color: #7ac0d8; background: #f0faf6; }
+  .sb-納品請求済   { color: var(--accent); border-color: var(--accent2); background: #f0f0f2; }
+  .sb-変更契約待   { color: #b07a30; border-color: #d09050; background: #fef8f0; }
+  .sb-最終契約待   { color: #9060c0; border-color: #b090d8; background: #f8f4fc; }
+  .sb-その他       { color: var(--text-muted); border-color: var(--border); background: #f5faf6; }
+
+  select.status, select[data-field="staff"], select.koushu-sel { text-align: center; }
+  .s-見積書作成中 { color: var(--text-mid) !important; }
+  .s-見積書提出済 { color: var(--warning) !important; }
+  .s-契約済       { color: var(--success) !important; }
+  .s-中間請求済   { color: #4a9ab0 !important; }
+  .s-納品請求済   { color: var(--accent) !important; }
+  .s-変更契約待   { color: #b07a30 !important; }
+  .s-最終契約待   { color: #9060c0 !important; }
+  .s-その他       { color: var(--text-muted) !important; }
+
+  /* 支払タブの金額表示 */
+  .pay-amount { text-align: right; font-weight: 700; font-size: 13px; }
+  .pay-amount.mid1  { color: #3a70b0; }
+  .pay-amount.mid2  { color: var(--tab-mid2); }
+  .pay-amount.final { color: var(--tab-final); }
+  .pay-month  { text-align: center; font-weight: 500; color: var(--text-mid); }
+  .pay-none   { color: var(--text-muted); font-style: italic; font-size: 11px; text-align: center; }
+
+  /* 支払タブの小計行 */
+  .subtotal-row td { background: #f0f5fa !important; font-weight: 700; border-top: 2px solid var(--border); }
+  #panel-mid1  .subtotal-row td { background: #e8f5ee !important; }
+  #panel-mid2  .subtotal-row td { background: #eae8f8 !important; }
+  #panel-final .subtotal-row td { background: #f8eaea !important; }
+
+  /* Row controls */
+  /* ドラッグ＆ドロップ */
+  .drag-handle {
+    display: none;
+    cursor: grab; color: var(--text-muted);
+    font-size: 14px; line-height: 1;
+    padding: 0 2px; user-select: none;
+    position: absolute; inset: 0;
+    align-items: center; justify-content: center;
+  }
+  body.edit-mode .drag-handle { display: flex; }
+  body.edit-mode .row-num-cell:hover .drag-handle { display: none; }
+
+  tr.dragging { opacity: 0.4; background: var(--row-hover) !important; }
+  tr.drag-over { border-top: 2px solid #4a82c4 !important; background: #ebebed !important; }
+  tbody tr { cursor: default; }
+  body.edit-mode tbody tr { cursor: grab; }
+  .row-num-cell {
+    text-align: center; width: 40px;
+    position: relative;
+  }
+  .row-num-view {
+    display: block;
+    font-size: 11px; color: var(--text-muted);
+    line-height: 28px;
+    transition: opacity 0.15s;
+  }
+  .btn-del {
+    position: absolute; inset: 0;
+    background: none; border: none; color: var(--danger);
+    cursor: pointer; font-size: 12px; font-weight: 700;
+    border-radius: 4px;
+    opacity: 0; transition: opacity 0.15s, background 0.15s;
+    display: flex; align-items: center; justify-content: center;
+  }
+  /* 表示モードでは削除ボタン非表示 */
+  body:not(.edit-mode) .btn-del { display: none !important; }
+  /* 編集モードでホバー時に表示 */
+  body.edit-mode .row-num-cell:hover .row-num-view { opacity: 0; }
+  body.edit-mode .row-num-cell:hover .btn-del { opacity: 1; background: #fce8e8; }
+  body.edit-mode .btn-del { display: flex; }
+
+  .no-data { text-align: center; padding: 50px 20px; color: var(--text-muted); font-size: 13px; }
+  .no-data span { font-size: 32px; display: block; margin-bottom: 10px; }
+
+  /* MODAL */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(44,62,82,0.35); backdrop-filter: blur(3px);
+    z-index: 100; display: none; align-items: center; justify-content: center;
+  }
+  .modal-overlay.show { display: flex; }
+  .modal {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 26px; width: 400px; max-width: 95vw;
+    box-shadow: 0 16px 48px rgba(44,62,82,0.2);
+  }
+  .modal h3 { font-size: 16px; color: var(--accent); margin-bottom: 16px; font-weight: 700; }
+  .form-group { margin-bottom: 12px; }
+  .form-group label { display: block; font-size: 11px; color: var(--text-muted); margin-bottom: 5px; }
+  .form-group input { width: 100%; padding: 9px 11px; font-size: 13px; display: block !important; }
+  .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 18px; }
+
+  /* TOAST */
+  .toast {
+    position: fixed; bottom: 24px; right: 24px;
+    background: var(--surface); border: 1px solid var(--success);
+    border-radius: 8px; padding: 11px 18px; color: var(--success); font-size: 13px;
+    box-shadow: 0 6px 24px rgba(44,62,82,0.18);
+    z-index: 200; transform: translateY(16px); opacity: 0; transition: all 0.28s;
+  }
+  .toast.show { transform: translateY(0); opacity: 1; }
+  .toast.error { border-color: var(--danger); color: var(--danger); }
+
+  /* ===== 業務進捗パネル ===== */
+  .t-prog .tab-dot { background: #5a8ac8; }
+
+  .prog-wrap {
+    padding: 16px 24px;
+    height: calc(100vh - 340px);
+    overflow-y: auto;
+  }
+  .prog-header-note {
+    font-size: 11px; color: var(--text-muted);
+    margin-bottom: 14px; padding: 6px 12px;
+    background: var(--surface2); border-radius: 6px;
+    border: 1px solid var(--border2); display: inline-block;
+  }
+  body.edit-mode .prog-header-note { display: none; }
+
+  .prog-cards { display: flex; flex-direction: column; gap: 12px; }
+
+  .prog-card {
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    border-radius: 10px;
+    padding: 16px 20px;
+    box-shadow: 0 1px 6px var(--shadow);
+  }
+  .prog-card-header {
+    display: flex; align-items: baseline; gap: 12px;
+    margin-bottom: 14px; flex-wrap: wrap;
+  }
+  .prog-card-name {
+    font-size: 14px; font-weight: 700; color: var(--text);
+  }
+  .prog-card-sub {
+    font-size: 11px; color: var(--text-muted);
+  }
+  .prog-card-status {
+    margin-left: auto;
+  }
+
+  .prog-items { display: flex; flex-direction: column; gap: 10px; }
+  .prog-item { display: flex; align-items: center; gap: 12px; }
+  .prog-item-label {
+    font-size: 12px; font-weight: 600; color: var(--text-mid);
+    width: 90px; flex-shrink: 0;
+  }
+  .prog-bar-wrap {
+    flex: 1; background: var(--bg2);
+    border-radius: 20px; height: 16px;
+    overflow: hidden; position: relative;
+  }
+  .prog-bar-fill {
+    height: 100%; border-radius: 20px;
+    transition: width 0.4s ease;
+    position: relative;
+  }
+  .prog-bar-fill.p-survey  { background: linear-gradient(90deg, #d2b48c, #b8966e); }
+  .prog-bar-fill.p-inspect { background: linear-gradient(90deg, #8ac8e8, #5aaad8); }
+  .prog-bar-fill.p-damage  { background: linear-gradient(90deg, #f0b87a, #d8884a); }
+  .prog-bar-fill.p-report  { background: linear-gradient(90deg, #c8a0d8, #9870b8); }
+
+  .prog-pct-view {
+    font-size: 12px; font-weight: 700; color: var(--text);
+    width: 40px; text-align: right; flex-shrink: 0;
+  }
+  .prog-pct-input {
+    display: none !important;
+    width: 60px !important; padding: 3px 6px !important;
+    text-align: right !important;
+    font-size: 12px !important; font-weight: 600 !important;
+    border-radius: 4px !important;
+    border: 1px solid var(--border) !important;
+  }
+  body.edit-mode .prog-pct-view   { display: none !important; }
+  body.edit-mode .prog-pct-input  { display: block !important; }
+
+  /* ===== リスト管理モーダル ===== */
+  .list-modal {
+    width: 480px; max-width: 95vw; max-height: 80vh;
+    display: flex; flex-direction: column;
+    padding: 0; overflow: hidden;
+  }
+  .list-modal-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 18px 22px 14px;
+    border-bottom: 1px solid var(--border2);
+  }
+  .list-modal-header h3 { font-size: 16px; color: var(--accent); font-weight: 700; }
+  .list-modal-close {
+    background: none; border: none; font-size: 18px; cursor: pointer;
+    color: var(--text-muted); width: 28px; height: 28px;
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    transition: background 0.15s;
+  }
+  .list-modal-close:hover { background: var(--bg2); color: var(--danger); }
+
+  .list-modal-body { padding: 16px 22px; overflow-y: auto; flex: 1; }
+
+  .list-add-row {
+    display: flex; gap: 8px; margin-bottom: 16px;
+  }
+  .list-add-row input {
+    flex: 1; display: block !important;
+    padding: 8px 10px; font-size: 13px;
+    border: 1px solid var(--border); border-radius: 6px;
+    background: var(--surface2); color: var(--text); outline: none;
+    transition: border-color 0.18s;
+  }
+  .list-add-row input:focus { border-color: var(--accent2); box-shadow: 0 0 0 2px rgba(74,130,196,0.12); }
+
+  .list-items { display: flex; flex-direction: column; gap: 6px; }
+  .list-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 10px;
+    background: var(--surface2); border: 1px solid var(--border2);
+    border-radius: 6px; transition: background 0.12s;
+  }
+  .list-item:hover { background: var(--row-hover); }
+  .list-item-num {
+    font-size: 11px; color: var(--text-muted);
+    width: 20px; flex-shrink: 0; text-align: center;
+  }
+  .list-item-name {
+    flex: 1; font-size: 13px; color: var(--text);
+    border: none; background: transparent; outline: none;
+    font-family: 'Noto Sans JP', sans-serif;
+    padding: 2px 4px; border-radius: 4px;
+  }
+  .list-item-name:focus {
+    background: var(--input-bg);
+    box-shadow: 0 0 0 2px rgba(74,130,196,0.15);
+  }
+  .list-item-del {
+    background: none; border: none; color: var(--text-muted);
+    cursor: pointer; font-size: 15px; padding: 2px 6px;
+    border-radius: 4px; transition: all 0.15s; flex-shrink: 0;
+  }
+  .list-item-del:hover { background: #fce8e8; color: var(--danger); }
+
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+  input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
+
+  /* 契約状況・窓口の中央揃え */
+  .cell-view.center { text-align: center; }
+
+  /* 工種バッジ */
+  .koushu-badge {
+    display: inline-block; font-size: 12px; font-weight: 700;
+    width: 24px; height: 24px; line-height: 24px;
+    border-radius: 4px; text-align: center;
+    background: #e8e8e8; color: #555;
+  }
+  .koushu-橋梁点検      { background: #cce5ff; color: #2a5fa0; }
+  .koushu-トンネル点検  { background: #c8f0d8; color: #1e7a48; }
+  .koushu-附属物点検    { background: #ffe4c4; color: #b05a10; }
+  .koushu-覆工構造物点検 { background: #e8d8f8; color: #6a3a9a; }
+  .koushu-その他        { background: #e4e4e4; color: #555; }
+  select.koushu-sel { font-size: 11px; text-align: center; }
+
+  /* 工種別集計カード */
+  .koushu-summary {
+    display: flex; gap: 8px; flex-wrap: wrap;
+    align-items: stretch;
+  }
+  .ks-card {
+    background: var(--surface); border: 1px solid var(--border2);
+    border-radius: 8px; padding: 8px 14px;
+    display: flex; flex-direction: column; gap: 2px;
+    box-shadow: 0 1px 4px var(--shadow); min-width: 110px;
+    position: relative; overflow: hidden;
+  }
+  .ks-card::after { content:''; position:absolute; left:0; top:0; width:4px; height:100%; border-radius:4px 0 0 4px; }
+  .ks-card.ks-橋梁点検::after      { background: #4a82c4; }
+  .ks-card.ks-トンネル点検::after   { background: #2ea860; }
+  .ks-card.ks-附属物点検::after     { background: #d07020; }
+  .ks-card.ks-覆工構造物点検::after { background: #8a50c8; }
+  .ks-card.ks-その他::after         { background: #999999; }
+  .ks-label { font-size: 10px; color: var(--text-muted); }
+  .ks-val   { font-size: 14px; font-weight: 700; color: var(--text); }
+  .ks-cnt   { font-size: 10px; color: var(--text-muted); }
+
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg2); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--accent2); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <div class="header-brand">⚪ FRe:x Design inc. <span class="header-sep">|</span></div>
+    <div class="header-title">
+      <h1>業務請負一覧表</h1>
+    </div>
+  </div>
+  <div class="header-meta">
+    <span id="sbStatus"></span>
+    <span id="nowLabel"></span>
+  </div>
+</header>
+
+<div class="toolbar">
+  <button class="btn btn-ghost" id="btnCustReg" onclick="openListModal('customer')" disabled>👤 顧客リスト管理</button>
+  <button class="btn btn-ghost" id="btnOrdReg"  onclick="openListModal('orderer')"  disabled>🏢 発注者リスト管理</button>
+  <div class="sep"></div>
+  <button class="btn btn-ghost" onclick="exportCSV()">📥 CSV出力</button>
+  <button class="btn btn-ghost" onclick="diagStorage()">🔍 データ確認</button>
+  <button class="btn btn-danger" id="btnClear" onclick="confirmClearAll()" disabled>🗑 全消去</button>
+</div>
+
+<div class="edit-banner" id="editBanner">
+  <div class="edit-banner-dot"></div>
+  編集モード中です。入力が完了したら「保存」ボタンを押してください。
+</div>
+
+<!-- 年度セレクター -->
+<div class="year-selector" id="yearSelector"></div>
+
+<!-- 売上サマリー + 目標売上達成率 横並び -->
+<div class="top-stats-bar">
+  <!-- 請負金額合計 -->
+  <div class="sum-card c3">
+    <label>請負金額合計（売上高）</label>
+    <div class="val" id="sumSettlement">¥0</div>
+  </div>
+
+  <!-- 目標売上達成率カード -->
+  <div class="goal-card">
+    <div class="goal-card-left">
+      <div class="goal-canvas-wrap">
+        <canvas id="goalChart" width="80" height="80"></canvas>
+        <div class="goal-chart-center">
+          <div class="goal-rate" id="goalRate">--%</div>
+        </div>
+      </div>
+    </div>
+    <div class="goal-card-mid">
+      <div class="goal-label">🎯 目標売上達成率</div>
+      <div class="goal-input-row">
+        <span class="goal-prefix">¥</span>
+        <input type="text" id="goalInput" placeholder="目標金額" oninput="onGoalInput(this)" inputmode="numeric">
+        <span class="goal-suffix">円</span>
+      </div>
+      <div class="goal-sub" id="goalSubText">目標金額を入力してください</div>
+    </div>
+  </div>
+
+  <!-- 工種別集計 -->
+  <div class="koushu-summary" id="koushuSummary"></div>
+</div>
+
+<!-- TAB BAR -->
+<div class="tab-bar">
+  <button class="tab-btn t-main active" onclick="switchTab('main')">
+    <span class="tab-dot"></span>業務一覧
+  </button>
+  <button class="tab-btn t-pay" onclick="switchTab('pay')">
+    <span class="tab-dot"></span>支払管理（中間①・中間②・最終）
+  </button>
+  <button class="tab-btn t-prog" onclick="switchTab('prog')">
+    <span class="tab-dot"></span>業務進捗
+  </button>
+  <div class="tab-bar-actions">
+    <button class="btn btn-edit" id="btnEdit" onclick="toggleEditMode()">✏️ 入力 / 編集</button>
+    <button class="btn btn-success" id="btnSave" onclick="saveAndViewMode()" disabled>💾 保存</button>
+    <button class="btn btn-primary" id="btnAdd" onclick="addRow()" disabled>＋ 新規行追加</button>
+  </div>
+</div>
+
+<!-- ===== PANEL: 業務一覧 ===== -->
+<div class="tab-panel active" id="panel-main">
+  <div class="panel-scroll">
+    <div class="table-container main-tbl">
+      <table id="mainTable">
+        <thead>
+          <tr>
+            <th rowspan="2" style="width:40px">#</th>
+            <th rowspan="2" style="width:110px">顧客</th>
+            <th rowspan="2" style="width:165px">業務名</th>
+            <th rowspan="2" style="width:130px">発注者</th>
+            <th rowspan="2" style="width:96px">当初契約<br><small>(円)</small></th>
+            <th rowspan="2" style="width:88px">増工<br><small>(円)</small></th>
+            <th rowspan="2" style="width:88px">減額<br><small>(円)</small></th>
+            <th rowspan="2" style="width:96px">精算<br><small>(円)</small></th>
+            <th rowspan="2" style="width:108px">契約状況</th>
+            <th rowspan="2" style="width:44px">工種</th>
+            <th rowspan="2" style="width:68px">数量</th>
+            <th rowspan="2" style="width:80px">窓口</th>
+          </tr>
+          <tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+      <div id="noData" class="no-data" style="display:none;">
+        <span>📋</span>データがありません。編集モードにして「新規行追加」で業務を追加してください。
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== PANEL: 支払管理（1テーブル横並び） ===== -->
+<div class="tab-panel" id="panel-pay">
+  <div class="pay-panel-wrap">
+    <div class="pay-panel-scroll">
+      <div class="table-container pay-tbl">
+        <table id="payTable">
+          <thead>
+            <tr>
+              <th rowspan="2" style="width:32px">#</th>
+              <th rowspan="2" style="width:100px">顧客</th>
+              <th rowspan="2">業務名</th>
+              <th rowspan="2" style="width:130px">発注者</th>
+              <th rowspan="2" style="width:68px">窓口</th>
+              <th rowspan="2" style="width:110px">契約状況</th>
+              <th colspan="2" style="border-bottom:1px solid var(--border);color:var(--tab-mid1);">中間支払①</th>
+              <th colspan="2" style="border-bottom:1px solid var(--border);color:var(--tab-mid2);">中間支払②</th>
+              <th colspan="2" style="border-bottom:1px solid var(--border);color:var(--tab-final);">最終支払</th>
+            </tr>
+            <tr>
+              <th class="th-pay1" style="width:68px">予定月</th>
+              <th class="th-pay1" style="width:110px">金額</th>
+              <th class="th-pay2" style="width:68px">予定月</th>
+              <th class="th-pay2" style="width:110px">金額</th>
+              <th class="th-payf" style="width:68px">予定月</th>
+              <th class="th-payf" style="width:110px">金額</th>
+            </tr>
+          </thead>
+          <tbody id="payBody"></tbody>
+        </table>
+        <div id="noDataPay" class="no-data" style="display:none;">
+          <span>💰</span>データがありません。業務一覧タブから業務を追加してください。
+        </div>
+      </div>
+    </div>
+    <!-- 合計バー（スクロール外・常に表示） -->
+    <div class="pay-totals-bar pay-totals-bar-fixed">
+      <div class="pay-total-item mid1-total">
+        <span class="pay-total-label">中間支払① 合計</span>
+        <span class="pay-total-val" id="payTotalMid1">¥0</span>
+      </div>
+      <div class="pay-total-item mid2-total">
+        <span class="pay-total-label">中間支払② 合計</span>
+        <span class="pay-total-val" id="payTotalMid2">¥0</span>
+      </div>
+      <div class="pay-total-item final-total">
+        <span class="pay-total-label">最終支払 合計</span>
+        <span class="pay-total-val" id="payTotalFinal">¥0</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== PANEL: 業務進捗 ===== -->
+<div class="tab-panel" id="panel-prog">
+  <div class="prog-wrap">
+    <div class="prog-header-note">✏️ 編集モードにすると進捗率を入力できます</div>
+    <div id="progCards" class="prog-cards"></div>
+    <div id="noDataProg" class="no-data" style="display:none;">
+      <span>📊</span>業務一覧タブで業務を追加してください。
+    </div>
+  </div>
+</div>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <h3 id="modalTitle">新規登録</h3>
+    <div class="form-group">
+      <label id="modalLabel">名称</label>
+      <input type="text" id="modalInput" placeholder="入力してください">
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal()">キャンセル</button>
+      <button class="btn btn-primary" onclick="saveModal()">登録</button>
+    </div>
+  </div>
+</div>
+
+<!-- リスト管理モーダル -->
+<div class="modal-overlay" id="listModalOverlay">
+  <div class="modal list-modal">
+    <div class="list-modal-header">
+      <h3 id="listModalTitle">顧客リスト管理</h3>
+      <button class="list-modal-close" onclick="closeListModal()">✕</button>
+    </div>
+    <div class="list-modal-body">
+      <div class="list-add-row">
+        <input type="text" id="listNewInput" placeholder="新規追加する名称を入力">
+        <button class="btn btn-primary" onclick="listAddItem()">＋ 追加</button>
+      </div>
+      <div class="list-items" id="listItems"></div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const STORAGE_KEY     = 'flexdesign_gyomu_v6';
+const CUSTOMERS_KEY   = 'flexdesign_customers_v6';
+const ORDERERS_KEY    = 'flexdesign_orderers_v6';
+const GOAL_KEY        = 'flexdesign_goal_v6';
+const YEARS_KEY       = 'flexdesign_years_v6';
+const ACTIVE_YEAR_KEY = 'flexdesign_active_year_v6';
+
+// ===== Supabase設定 =====
+// ★ 以下をご自身のSupabaseプロジェクトの値に変更してください
+const SUPABASE_URL     = 'https://grhqmuqzpjwiuyexasmm.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdyaHFtdXF6cGp3aXV5ZXhhc21tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5ODQ4MzYsImV4cCI6MjA4OTU2MDgzNn0.USghV32TAEgx2fR62KHN3JI5YHTetsaTU5NgFWTScRo';
+const USE_SUPABASE = true; // Supabase接続有効
+
+async function sbFetch(path, options = {}) {
+  if (!USE_SUPABASE) return null;
+  const res = await fetch(SUPABASE_URL + '/rest/v1/' + path, {
+    headers: {
+      'apikey': SUPABASE_ANON_KEY,
+      'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
+      'Content-Type': 'application/json',
+      'Prefer': 'return=representation',
+      ...options.headers
+    },
+    ...options
+  });
+  if (!res.ok) return null;
+  const text = await res.text();
+  return text ? JSON.parse(text) : null;
+}
+
+// Supabaseから全データ読み込み
+async function loadFromSupabase() {
+  if (!USE_SUPABASE) return false;
+  try {
+    // 行データ
+    const rowsData = await sbFetch('gyomu_rows?select=year,row_data&order=year');
+    if (rowsData && rowsData.length > 0) {
+      // 年度リストを構築
+      const yrs = [...new Set(rowsData.map(r => r.year))].sort();
+      localStorage.setItem(YEARS_KEY, JSON.stringify(yrs));
+      yrs.forEach(yr => {
+        const yrows = rowsData.filter(r => r.year === yr).map(r => r.row_data);
+        localStorage.setItem(`flexdesign_rows_${yr}`, JSON.stringify(yrows));
+      });
+    }
+    // メタデータ（顧客・発注者・目標など）
+    const meta = await sbFetch('gyomu_meta?select=key,value');
+    if (meta) {
+      meta.forEach(m => {
+        localStorage.setItem(m.key, JSON.stringify(m.value));
+      });
+    }
+    showToast('☁️ クラウドからデータを読み込みました');
+    return true;
+  } catch(e) {
+    console.error('Supabase load error:', e);
+    return false;
+  }
+}
+
+// Supabaseへ保存
+async function saveToSupabase() {
+  if (!USE_SUPABASE) return;
+  try {
+    // 現在の年度の行データを保存
+    // まず既存データを削除してから挿入（upsert）
+    await sbFetch(`gyomu_rows?year=eq.${activeYear}`, { method: 'DELETE' });
+    if (rows.length > 0) {
+      const inserts = rows.map(r => ({ year: activeYear, row_data: r }));
+      await sbFetch('gyomu_rows', {
+        method: 'POST',
+        body: JSON.stringify(inserts)
+      });
+    }
+    // メタデータ保存
+    const metaItems = [
+      { key: CUSTOMERS_KEY, value: customers },
+      { key: ORDERERS_KEY,  value: orderers },
+      { key: YEARS_KEY,     value: years },
+    ];
+    for (const item of metaItems) {
+      await sbFetch(`gyomu_meta?key=eq.${item.key}`, { method: 'DELETE' });
+      await sbFetch('gyomu_meta', {
+        method: 'POST',
+        body: JSON.stringify({ key: item.key, value: item.value })
+      });
+    }
+    // 目標金額
+    const goalVal = Number((document.getElementById('goalInput')?.value || '').replace(/,/g, '')) || 0;
+    if (goalVal) {
+      const gkey = goalKey(activeYear);
+      await sbFetch(`gyomu_meta?key=eq.${gkey}`, { method: 'DELETE' });
+      await sbFetch('gyomu_meta', {
+        method: 'POST',
+        body: JSON.stringify({ key: gkey, value: goalVal })
+      });
+    }
+  } catch(e) {
+    console.error('Supabase save error:', e);
+  }
+}
+
+const MONTHS = ['4月','5月','6月','7月','8月','9月','10月','11月','12月','1月','2月','3月'];
+const KOUSHU_LIST  = ['橋梁点検','トンネル点検','附属物点検','覆工構造物点検','その他'];
+const KOUSHU_SHORT = { '橋梁点検':'橋', 'トンネル点検':'ト', '附属物点検':'附', '覆工構造物点検':'覆', 'その他':'他' };
+const KOUSHU_COLOR = { '橋梁点検':'#5a8fc4', 'トンネル点検':'#7a9e5a', '附属物点検':'#c4924a', '覆工構造物点検':'#9a6ab4', 'その他':'#888' };
+const CONTRACT_STATUSES = ['見積書作成中','見積書提出済','契約済','中間請求済','納品請求済','変更契約待','最終契約待','その他'];
+const STAFF = ['加瀬谷','星野','佐藤','二木','渡部','藤岡','本間','堀井','その他'];
+
+// 期数計算（2025=3期, 2026=4期, 2027=5期, ...）
+function getPeriod(yr) { return (yr - 2025) + 3; }
+function yearLabel(yr) { return `${yr}年度：第${getPeriod(yr)}期`; }
+
+// 現在の「年度」を返す（4月〜翌3月を1年度として扱う）
+// 例：2025年4月〜2026年3月 → 2025年度
+// ※ 2025年度（第3期）スタート
+function getCurrentFiscalYear() {
+  const now = new Date();
+  const m = now.getMonth() + 1; // 1-12
+  const y = now.getFullYear();
+  const fy = m >= 4 ? y : y - 1;
+  // 最低でも2025年度から
+  return Math.max(fy, 2025);
+}
+
+let goalChart = null;
+let years = [];       // 管理している年度リスト [2025, 2026, ...]
+let activeYear = 2025;
+
+const DEFAULT_CUSTOMERS = ['福山C','復建技術C','測地C','石川技研C','昭和土木設計','ウヌマ地域総研','アルファ','OT'];
+const DEFAULT_ORDERERS  = [
+  '国交省 湯沢河川','国交省 仙台河川','国交省 酒田河川','国交省 岩手河川',
+  '秋田県 鹿角','秋田県 北秋田','秋田県 山本','秋田県 秋田',
+  '秋田県 由利','秋田県 仙北','秋田県 平鹿','秋田県 雄勝'
+];
+
+let rows = [];
+let customers = [];
+let orderers  = [];
+let modalType = '';
+let rowIdCounter = 1;
+let isEditMode = false;
+let currentTab = 'main';
+let dragSrcId  = null;
+
+// ---- INIT ----
+async function init() {
+  // v5→v6 データ移行（一度だけ実行）
+  migrateFromV5();
+
+  // Supabase設定済みならクラウドから読み込み
+  if (USE_SUPABASE) {
+    showToast('☁️ クラウドからデータ読み込み中...');
+    await loadFromSupabase();
+  }
+
+  const sc = localStorage.getItem(CUSTOMERS_KEY);
+  const so = localStorage.getItem(ORDERERS_KEY);
+  customers = sc ? JSON.parse(sc) : [...DEFAULT_CUSTOMERS];
+  orderers  = so ? JSON.parse(so) : [...DEFAULT_ORDERERS];
+
+  // 年度リスト初期化（2025年度〜現在の会計年度まで）
+  const curFY = getCurrentFiscalYear();
+  const sy = localStorage.getItem(YEARS_KEY);
+  if (sy) {
+    years = JSON.parse(sy);
+  } else {
+    years = [];
+    for (let y = 2025; y <= curFY; y++) years.push(y);
+  }
+  const say = localStorage.getItem(ACTIVE_YEAR_KEY);
+  activeYear = say ? Number(say) : curFY;
+  if (!years.includes(activeYear)) activeYear = years[years.length - 1];
+
+  loadYearData(activeYear);
+
+  const now = new Date();
+  document.getElementById('nowLabel').textContent =
+    now.getFullYear() + '/' + String(now.getMonth()+1).padStart(2,'0') + '/' + String(now.getDate()).padStart(2,'0');
+
+  const sbEl = document.getElementById('sbStatus');
+  if (sbEl) {
+    sbEl.innerHTML = USE_SUPABASE
+      ? '<span style="background:#4a82c4;color:white;padding:2px 8px;border-radius:10px;font-size:10px;margin-right:8px">☁️ クラウド接続中</span>'
+      : '<span style="background:#aaa;color:white;padding:2px 8px;border-radius:10px;font-size:10px;margin-right:8px">💾 ローカルのみ</span>';
+  }
+
+  renderYearSelector();
+  renderAll();
+}
+
+// ---- v5→v6 データ移行 ----
+function migrateFromV5() {
+  if (localStorage.getItem('flexdesign_migrated_v6')) return; // 移行済みならスキップ
+
+  // 旧v5キーからデータを取得して移行
+  const oldKeys = [
+    ['flexdesign_customers_v5', CUSTOMERS_KEY],
+    ['flexdesign_orderers_v5',  ORDERERS_KEY],
+    ['flexdesign_years_v5',     YEARS_KEY],
+    ['flexdesign_active_year_v5', ACTIVE_YEAR_KEY],
+  ];
+  oldKeys.forEach(([oldK, newK]) => {
+    const val = localStorage.getItem(oldK);
+    if (val && !localStorage.getItem(newK)) localStorage.setItem(newK, val);
+  });
+
+  // 旧v5の行データを年度別に移行
+  // v5では単一キー or 年度別キー両方に対応
+  const oldYears = localStorage.getItem('flexdesign_years_v5');
+  const yList = oldYears ? JSON.parse(oldYears) : [2025, 2026];
+  yList.forEach(yr => {
+    const oldRowKey = `flexdesign_rows_${yr}`;
+    const val = localStorage.getItem(oldRowKey);
+    if (val && !localStorage.getItem(rowKey(yr))) {
+      localStorage.setItem(rowKey(yr), val);
+    }
+  });
+  // v5単一ストレージキーの行データも移行
+  const oldSingle = localStorage.getItem('flexdesign_gyomu_v5');
+  if (oldSingle && !localStorage.getItem(rowKey(2025))) {
+    localStorage.setItem(rowKey(2025), oldSingle);
+  }
+  // goal
+  yList.forEach(yr => {
+    const oldGoalKey = `flexdesign_goal_${yr}`;
+    const val = localStorage.getItem(oldGoalKey);
+    if (val && !localStorage.getItem(goalKey(yr))) {
+      localStorage.setItem(goalKey(yr), val);
+    }
+  });
+
+  localStorage.setItem('flexdesign_migrated_v6', '1');
+}
+
+// ---- 年度データ保存キー ----
+function rowKey(yr)  { return `flexdesign_rows_${yr}`; }
+function goalKey(yr) { return `flexdesign_goal_${yr}`; }
+
+// ---- 年度データ読み込み ----
+function loadYearData(yr) {
+  activeYear = yr;
+  localStorage.setItem(ACTIVE_YEAR_KEY, yr);
+
+  const sr = localStorage.getItem(rowKey(yr));
+  if (sr) {
+    rows = JSON.parse(sr);
+    rowIdCounter = rows.reduce((m, r) => Math.max(m, r.id || 0), 0) + 1;
+  } else {
+    rowIdCounter = 1;
+    rows = [makeEmptyRow(), makeEmptyRow()];
+  }
+
+  // 目標金額
+  const sg = localStorage.getItem(goalKey(yr));
+  const inp = document.getElementById('goalInput');
+  if (inp) {
+    const saved = sg || '';
+    // 保存値にカンマを付けて表示
+    inp.value = saved ? Number(saved).toLocaleString() : '';
+  }
+
+  // ヘッダー年度表示はなし（年度セレクターで管理）
+}
+
+// ---- 年度セレクター描画 ----
+function renderYearSelector() {
+  const wrap = document.getElementById('yearSelector');
+  wrap.innerHTML = '';
+
+  // ラベル
+  const lbl = document.createElement('span');
+  lbl.className = 'year-selector-label';
+  lbl.textContent = '表示年度：';
+  wrap.appendChild(lbl);
+
+  // プルダウン
+  const sel = document.createElement('select');
+  sel.className = 'year-select';
+  years.forEach(yr => {
+    const opt = document.createElement('option');
+    opt.value = yr;
+    opt.textContent = yearLabel(yr);
+    if (yr === activeYear) opt.selected = true;
+    sel.appendChild(opt);
+  });
+  sel.addEventListener('change', () => switchYear(Number(sel.value)));
+  wrap.appendChild(sel);
+
+  // 翌年度追加ボタン（現在の会計年度+1まで）
+  const nextYr = Math.max(...years) + 1;
+  const addBtn = document.createElement('button');
+  addBtn.className = 'year-add-btn';
+  addBtn.innerHTML = `＋ ${nextYr}年度を追加`;
+  addBtn.onclick = () => addYear(nextYr);
+  wrap.appendChild(addBtn);
+
+  // 削除ボタン（年度が2つ以上あるときだけ表示）
+  if (years.length > 1) {
+    const delBtn = document.createElement('button');
+    delBtn.className = 'year-del-btn';
+    delBtn.innerHTML = `🗑 ${yearLabel(activeYear)}を削除`;
+    delBtn.onclick = () => deleteYear(activeYear);
+    wrap.appendChild(delBtn);
+  }
+}
+
+function switchYear(yr) {
+  // 現在の年度を保存してから切り替え
+  saveCurrentYear();
+  loadYearData(yr);
+  renderYearSelector();
+  if (goalChart) { goalChart.destroy(); goalChart = null; }
+  renderAll();
+  switchTab('main');
+}
+
+function addYear(yr) {
+  if (years.includes(yr)) return;
+  saveCurrentYear();
+  years.push(yr);
+  localStorage.setItem(YEARS_KEY, JSON.stringify(years));
+  loadYearData(yr);
+  renderYearSelector();
+  if (goalChart) { goalChart.destroy(); goalChart = null; }
+  renderAll();
+  switchTab('main');
+  showToast(`${yearLabel(yr)} を作成しました`);
+}
+
+function deleteYear(yr) {
+  if (years.length <= 1) { showToast('最後の年度は削除できません', true); return; }
+  if (!confirm(`${yearLabel(yr)} のデータをすべて削除しますか？`)) return;
+  localStorage.removeItem(rowKey(yr));
+  localStorage.removeItem(goalKey(yr));
+  years = years.filter(y => y !== yr);
+  localStorage.setItem(YEARS_KEY, JSON.stringify(years));
+  const newActive = years[years.length - 1];
+  loadYearData(newActive);
+  renderYearSelector();
+  if (goalChart) { goalChart.destroy(); goalChart = null; }
+  renderAll();
+  showToast(`${yr}年度を削除しました`);
+}
+
+function saveCurrentYear() {
+  localStorage.setItem(rowKey(activeYear), JSON.stringify(rows));
+  localStorage.setItem(CUSTOMERS_KEY, JSON.stringify(customers));
+  localStorage.setItem(ORDERERS_KEY, JSON.stringify(orderers));
+  const goalVal = Number((document.getElementById('goalInput')?.value || '').replace(/,/g, '')) || 0;
+  if (goalVal) localStorage.setItem(goalKey(activeYear), goalVal);
+}
+
+function makeEmptyRow() {
+  return {
+    id: rowIdCounter++,
+    customer:'', name:'', orderer:'',
+    original:'', addition:'', deduction:'',
+    status:'',
+    mid1month:'', mid1amount:'',
+    mid2month:'', mid2amount:'',
+    finalmonth:'',
+    qty:'', staff:'', koushu:'',
+    prog_survey:0, prog_inspect:0, prog_damage:0, prog_report:0
+  };
+}
+
+// ---- TAB ----
+function switchTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('panel-' + tab).classList.add('active');
+  document.querySelector('.tab-btn.t-' + tab).classList.add('active');
+
+  if (tab === 'pay')  renderPayPanel();
+  if (tab === 'prog') renderProgPanel();
+}
+
+// ---- EDIT MODE ----
+function toggleEditMode() {
+  isEditMode = true;
+  document.body.classList.add('edit-mode');
+  document.getElementById('editBanner').classList.add('show');
+  document.getElementById('btnEdit').disabled = true;
+  document.getElementById('btnSave').disabled = false;
+  document.getElementById('btnAdd').disabled  = false;
+  const cust = document.getElementById('btnCustReg');
+  const ord  = document.getElementById('btnOrdReg');
+  const clr  = document.getElementById('btnClear');
+  if (cust) cust.disabled = false;
+  if (ord)  ord.disabled  = false;
+  if (clr)  clr.disabled  = false;
+  document.querySelectorAll('#tableBody tr').forEach(tr => tr.setAttribute('draggable', 'true'));
+}
+
+function exitEditMode() {
+  isEditMode = false;
+  document.body.classList.remove('edit-mode');
+  document.getElementById('editBanner').classList.remove('show');
+  document.getElementById('btnEdit').disabled = false;
+  document.getElementById('btnSave').disabled = true;
+  document.getElementById('btnAdd').disabled  = true;
+  const cust = document.getElementById('btnCustReg');
+  const ord  = document.getElementById('btnOrdReg');
+  const clr  = document.getElementById('btnClear');
+  if (cust) cust.disabled = true;
+  if (ord)  ord.disabled  = true;
+  if (clr)  clr.disabled  = true;
+  document.querySelectorAll('#tableBody tr').forEach(tr => tr.setAttribute('draggable', 'false'));
+}
+
+function saveAndViewMode() {
+  saveAll();
+  exitEditMode();
+  renderAll();
+}
+
+// ---- RENDER MAIN ----
+function renderAll() {
+  const tbody  = document.getElementById('tableBody');
+  const noData = document.getElementById('noData');
+  tbody.innerHTML = '';
+
+  if (rows.length === 0) {
+    noData.style.display = 'block';
+    updateSummary(); return;
+  }
+  noData.style.display = 'none';
+
+  rows.forEach((row, idx) => {
+    const tr = document.createElement('tr');
+    tr.dataset.id = row.id;
+    tr.innerHTML = buildRowHTML(row, idx + 1);
+    tbody.appendChild(tr);
+    bindRowEvents(tr, row.id);
+  });
+
+  // 支払タブも更新
+  if (currentTab === 'pay')  renderPayPanel();
+  if (currentTab === 'prog') renderProgPanel();
+  updateSummary();
+}
+
+function fmtNum(v) {
+  if (v === '' || v === null || v === undefined) return '';
+  return Number(v).toLocaleString();
+}
+function fmtYen(v) {
+  if (v === '' || v === null || v === undefined || Number(v) === 0) return '--';
+  return '¥ ' + Number(v).toLocaleString();
+}
+
+function buildRowHTML(row, num) {
+  const settlement = calcSettlement(row);
+  const showSettle = (row.original !== '') ? settlement : '';
+
+  const statusBadge = row.status
+    ? `<span class="status-badge sb-${row.status}">${row.status}</span>`
+    : `<span class="cell-view empty">--</span>`;
+
+  return `
+    <td class="row-num-cell">
+      <span class="row-num-view">${num}</span>
+      <span class="drag-handle" title="ドラッグして並び替え">⠿</span>
+      <button class="btn-del" onclick="deleteRow(${row.id})" title="削除">✕</button>
+    </td>
+    <td>
+      <span class="cell-view ${row.customer?'':'empty'}">${esc(row.customer)||'--'}</span>
+      <select data-field="customer">${buildOptions(customers, row.customer)}</select>
+    </td>
+    <td>
+      <span class="cell-view ${row.name?'':'empty'}">${esc(row.name)||'--'}</span>
+      <input type="text" data-field="name" value="${esc(row.name)}">
+    </td>
+    <td>
+      <span class="cell-view ${row.orderer?'':'empty'}">${esc(row.orderer)||'--'}</span>
+      <select data-field="orderer">${buildOptions(orderers, row.orderer)}</select>
+    </td>
+    <td>
+      <span class="cell-view num ${row.original!==''?'':'empty'}">${row.original!==''?fmtNum(row.original):'--'}</span>
+      <input type="number" data-field="original" value="${row.original}" placeholder="0">
+    </td>
+    <td>
+      <span class="cell-view num ${row.addition!==''?'':'empty'}">${row.addition!==''?fmtNum(row.addition):'--'}</span>
+      <input type="number" data-field="addition" value="${row.addition}" placeholder="0">
+    </td>
+    <td>
+      <span class="cell-view num ${row.deduction!==''?'':'empty'}">${row.deduction!==''?fmtNum(row.deduction):'--'}</span>
+      <input type="number" data-field="deduction" value="${row.deduction}" placeholder="0">
+    </td>
+    <td>
+      <span class="cell-view settle-view" data-settle-view="${row.id}">${showSettle!==''?fmtNum(showSettle):'--'}</span>
+    </td>
+    <td>
+      <span class="cell-view center">${statusBadge}</span>
+      <select data-field="status" class="status ${statusCls(row.status)}">${buildStatusOptions(row.status)}</select>
+    </td>
+    <td>
+      <span class="cell-view center koushu-badge koushu-${row.koushu}">${KOUSHU_SHORT[row.koushu]||'--'}</span>
+      <select data-field="koushu" class="koushu-sel">${buildKoushuOptions(row.koushu)}</select>
+    </td>
+    <td>
+      <span class="cell-view center ${row.qty?'':'empty'}">${esc(row.qty)||'--'}</span>
+      <input type="text" data-field="qty" value="${esc(row.qty)}" style="text-align:center">
+    </td>
+    <td>
+      <span class="cell-view center ${row.staff?'':'empty'}">${esc(row.staff)||'--'}</span>
+      <select data-field="staff">${buildStaffOptions(row.staff)}</select>
+    </td>
+  `;
+}
+
+// ---- RENDER PAY PANEL（1テーブル横並び・編集対応） ----
+function renderPayPanel() {
+  const tbody  = document.getElementById('payBody');
+  const noData = document.getElementById('noDataPay');
+  tbody.innerHTML = '';
+
+  const active = rows.filter(r => r.customer || r.name || r.original !== '');
+
+  if (active.length === 0) {
+    noData.style.display = 'block';
+    document.getElementById('payTotalMid1').textContent  = '¥0';
+    document.getElementById('payTotalMid2').textContent  = '¥0';
+    document.getElementById('payTotalFinal').textContent = '¥0';
+    return;
+  }
+  noData.style.display = 'none';
+
+  let sumMid1 = 0, sumMid2 = 0, sumFinal = 0;
+
+  active.forEach((row, idx) => {
+    const settle = calcSettlement(row);
+    const fin    = calcFinal(row, settle);
+    sumMid1  += toNum(row.mid1amount);
+    sumMid2  += toNum(row.mid2amount);
+    sumFinal += fin;
+
+    const badge = row.status
+      ? `<span class="status-badge sb-${row.status}">${row.status}</span>`
+      : `<span style="color:var(--text-muted)">--</span>`;
+
+    // view表示用スパン + 編集用フォームを両方埋め込む
+    const m1Opts  = buildMonthOptions(row.mid1month);
+    const m2Opts  = buildMonthOptions(row.mid2month);
+    const mfOpts  = buildMonthOptions(row.finalmonth);
+
+    const tr = document.createElement('tr');
+    tr.dataset.id = row.id;
+    tr.innerHTML = `
+      <td class="row-num">${idx+1}</td>
+      <td style="font-size:12px"><span class="cell-view">${esc(row.customer)||'--'}</span></td>
+      <td style="font-size:12px"><span class="cell-view">${esc(row.name)||'--'}</span></td>
+      <td style="font-size:12px"><span class="cell-view">${esc(row.orderer)||'--'}</span></td>
+      <td style="text-align:center;font-size:12px"><span class="cell-view">${esc(row.staff)||'--'}</span></td>
+      <td style="text-align:center"><span class="cell-view">${badge}</span></td>
+      <td style="text-align:center">
+        <span class="cell-view ${row.mid1month?'':'empty'}" style="color:var(--tab-mid1);font-weight:600">${row.mid1month||'--'}</span>
+        <select data-field="mid1month" data-rowid="${row.id}">${m1Opts}</select>
+      </td>
+      <td style="text-align:right">
+        <span class="cell-view num ${row.mid1amount!==''?'':'empty'}" style="color:var(--tab-mid1);font-weight:700">${row.mid1amount!==''?'¥ '+fmtNum(row.mid1amount):'--'}</span>
+        <input type="number" data-field="mid1amount" data-rowid="${row.id}" value="${row.mid1amount}" placeholder="0">
+      </td>
+      <td style="text-align:center">
+        <span class="cell-view ${row.mid2month?'':'empty'}" style="color:var(--tab-mid2);font-weight:600">${row.mid2month||'--'}</span>
+        <select data-field="mid2month" data-rowid="${row.id}">${m2Opts}</select>
+      </td>
+      <td style="text-align:right">
+        <span class="cell-view num ${row.mid2amount!==''?'':'empty'}" style="color:var(--tab-mid2);font-weight:700">${row.mid2amount!==''?'¥ '+fmtNum(row.mid2amount):'--'}</span>
+        <input type="number" data-field="mid2amount" data-rowid="${row.id}" value="${row.mid2amount}" placeholder="0">
+      </td>
+      <td style="text-align:center">
+        <span class="cell-view ${row.finalmonth?'':'empty'}" style="color:var(--tab-final);font-weight:600">${row.finalmonth||'--'}</span>
+        <select data-field="finalmonth" data-rowid="${row.id}">${mfOpts}</select>
+      </td>
+      <td style="text-align:right">
+        <span class="cell-view final-view" data-final-view="${row.id}" style="color:var(--tab-final);font-weight:700">${fin?'¥ '+fin.toLocaleString():'--'}</span>
+      </td>
+    `;
+    tbody.appendChild(tr);
+
+    // 編集イベントをバインド
+    tr.querySelectorAll('[data-rowid]').forEach(el => {
+      el.addEventListener('change', () => updatePayField(el));
+      el.addEventListener('input',  () => updatePayField(el));
+    });
+  });
+
+  document.getElementById('payTotalMid1').textContent  = '¥' + sumMid1.toLocaleString();
+  document.getElementById('payTotalMid2').textContent  = '¥' + sumMid2.toLocaleString();
+  document.getElementById('payTotalFinal').textContent = '¥' + sumFinal.toLocaleString();
+}
+
+function updatePayField(el) {
+  const rowId = Number(el.dataset.rowid);
+  const row   = rows.find(r => r.id === rowId);
+  if (!row) return;
+  const field = el.dataset.field;
+  row[field] = (el.type === 'number') ? (el.value === '' ? '' : Number(el.value)) : el.value;
+
+  // 最終支払（自動計算）のview更新
+  const tr     = el.closest('tr');
+  const settle = calcSettlement(row);
+  const fin    = calcFinal(row, settle);
+  const fView  = tr.querySelector(`[data-final-view="${rowId}"]`);
+  if (fView) fView.textContent = fin ? '¥ ' + fin.toLocaleString() : '--';
+
+  // viewスパン更新
+  const viewSpan = el.previousElementSibling;
+  if (viewSpan && viewSpan.classList.contains('cell-view')) {
+    if (el.type === 'number') {
+      viewSpan.textContent = row[field] !== '' ? '¥ ' + fmtNum(row[field]) : '--';
+      viewSpan.classList.toggle('empty', row[field] === '');
+    } else {
+      viewSpan.textContent = el.value || '--';
+      viewSpan.classList.toggle('empty', !el.value);
+    }
+  }
+
+  // 合計更新
+  const sumMid1  = rows.reduce((s,r) => s + toNum(r.mid1amount), 0);
+  const sumMid2  = rows.reduce((s,r) => s + toNum(r.mid2amount), 0);
+  const sumFinal = rows.reduce((s,r) => s + calcFinal(r), 0);
+  document.getElementById('payTotalMid1').textContent  = '¥' + sumMid1.toLocaleString();
+  document.getElementById('payTotalMid2').textContent  = '¥' + sumMid2.toLocaleString();
+  document.getElementById('payTotalFinal').textContent = '¥' + sumFinal.toLocaleString();
+  updateSummary();
+}
+
+// ---- RENDER 業務進捗パネル ----
+function renderProgPanel() {
+  const wrap  = document.getElementById('progCards');
+  const noData = document.getElementById('noDataProg');
+  wrap.innerHTML = '';
+
+  const active = rows.filter(r => r.customer || r.name);
+  if (active.length === 0) {
+    noData.style.display = 'block'; return;
+  }
+  noData.style.display = 'none';
+
+  const progDefs = [
+    { key: 'prog_survey',  label: '現地踏査',   cls: 'p-survey'  },
+    { key: 'prog_inspect', label: '定期点検',   cls: 'p-inspect' },
+    { key: 'prog_damage',  label: '損傷図作成', cls: 'p-damage'  },
+    { key: 'prog_report',  label: '調書作成',   cls: 'p-report'  },
+  ];
+
+  active.forEach(row => {
+    const badge = row.status
+      ? `<span class="status-badge sb-${row.status}" style="font-size:10px">${row.status}</span>` : '';
+
+    const card = document.createElement('div');
+    card.className = 'prog-card';
+
+    const header = `
+      <div class="prog-card-header">
+        <span class="prog-card-name">${esc(row.name) || '（業務名未入力）'}</span>
+        <span class="prog-card-sub">${esc(row.customer)}${row.orderer ? '　' + esc(row.orderer) : ''}</span>
+        <span class="prog-card-status">${badge}</span>
+      </div>`;
+
+    const items = progDefs.map(def => {
+      const val = Math.min(100, Math.max(0, Number(row[def.key]) || 0));
+      const color = val >= 100 ? '#4a82c4' : val >= 50 ? 'var(--accent)' : 'var(--text-mid)';
+      return `
+        <div class="prog-item">
+          <span class="prog-item-label">${def.label}</span>
+          <div class="prog-bar-wrap">
+            <div class="prog-bar-fill ${def.cls}" style="width:${val}%"></div>
+          </div>
+          <span class="prog-pct-view" style="color:${color}">${val}%</span>
+          <input type="number" class="prog-pct-input"
+            min="0" max="100" value="${val}"
+            data-rowid="${row.id}" data-field="${def.key}"
+            oninput="updateProgField(this)">
+        </div>`;
+    }).join('');
+
+    card.innerHTML = header + `<div class="prog-items">${items}</div>`;
+    wrap.appendChild(card);
+  });
+}
+
+function updateProgField(el) {
+  const rowId = Number(el.dataset.rowid);
+  const field  = el.dataset.field;
+  const row    = rows.find(r => r.id === rowId);
+  if (!row) return;
+
+  let val = Math.min(100, Math.max(0, Number(el.value) || 0));
+  row[field] = val;
+
+  // バーとview数値をリアルタイム更新
+  const card = el.closest('.prog-card');
+  const item = el.closest('.prog-item');
+  const fill  = item.querySelector('.prog-bar-fill');
+  const view  = item.querySelector('.prog-pct-view');
+  if (fill) fill.style.width = val + '%';
+  if (view) {
+    view.textContent = val + '%';
+    view.style.color = val >= 100 ? '#4a82c4' : val >= 50 ? 'var(--accent)' : 'var(--text-mid)';
+  }
+}
+
+function statusBadgeHtml(status) {
+  if (!status) return `<span style="color:var(--text-muted)">--</span>`;
+  return `<span class="status-badge sb-${status}">${status}</span>`;
+}
+
+// ---- HELPERS ----
+function buildOptions(list, selected) {
+  return ['', ...list].map(v =>
+    `<option value="${esc(v)}" ${v===selected?'selected':''}>${esc(v)||'-- 選択 --'}</option>`
+  ).join('');
+}
+function buildMonthOptions(selected) {
+  return ['', ...MONTHS].map(m =>
+    `<option value="${m}" ${m===selected?'selected':''}>${m||'--'}</option>`
+  ).join('');
+}
+function buildStatusOptions(selected) {
+  return ['', ...CONTRACT_STATUSES].map(s =>
+    `<option value="${s}" ${s===selected?'selected':''}>${s||'-- 選択 --'}</option>`
+  ).join('');
+}
+function buildKoushuOptions(selected) {
+  return ['', ...KOUSHU_LIST].map(k =>
+    `<option value="${k}" ${k===selected?'selected':''}>${k||'-- 選択 --'}</option>`
+  ).join('');
+}
+function buildStaffOptions(selected) {
+  return ['', ...STAFF].map(s =>
+    `<option value="${s}" ${s===selected?'selected':''}>${s||'-- 選択 --'}</option>`
+  ).join('');
+}
+
+function statusCls(s) { return s ? 's-' + s : ''; }
+function esc(s) { return String(s??'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
+function toNum(v) { return (v===''||v===null||v===undefined) ? 0 : Number(v)||0; }
+function calcSettlement(r) { return toNum(r.original) + toNum(r.addition) - toNum(r.deduction); }
+function calcFinal(r, s) {
+  const settle = s !== undefined ? s : calcSettlement(r);
+  return settle - toNum(r.mid1amount) - toNum(r.mid2amount);
+}
+
+function bindRowEvents(tr, rowId) {
+  tr.querySelectorAll('[data-field]').forEach(el => {
+    el.addEventListener('change', () => updateField(rowId, el, tr));
+    el.addEventListener('input',  () => updateField(rowId, el, tr));
+  });
+
+  // ドラッグ＆ドロップ（編集モード時のみ有効）
+  tr.setAttribute('draggable', 'false');
+  tr.addEventListener('dragstart', e => {
+    if (!isEditMode) { e.preventDefault(); return; }
+    dragSrcId = rowId;
+    tr.classList.add('dragging');
+    e.dataTransfer.effectAllowed = 'move';
+  });
+  tr.addEventListener('dragend', () => {
+    tr.classList.remove('dragging');
+    document.querySelectorAll('#tableBody tr').forEach(r => r.classList.remove('drag-over'));
+  });
+  tr.addEventListener('dragover', e => {
+    if (!isEditMode || dragSrcId === rowId) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    document.querySelectorAll('#tableBody tr').forEach(r => r.classList.remove('drag-over'));
+    tr.classList.add('drag-over');
+  });
+  tr.addEventListener('dragleave', () => tr.classList.remove('drag-over'));
+  tr.addEventListener('drop', e => {
+    e.preventDefault();
+    if (!isEditMode || dragSrcId === rowId) return;
+    tr.classList.remove('drag-over');
+    const srcIdx  = rows.findIndex(r => r.id === dragSrcId);
+    const destIdx = rows.findIndex(r => r.id === rowId);
+    if (srcIdx < 0 || destIdx < 0) return;
+    const [moved] = rows.splice(srcIdx, 1);
+    rows.splice(destIdx, 0, moved);
+    renderAll();
+  });
+}
+
+function updateField(rowId, el, tr) {
+  const row = rows.find(r => r.id === rowId);
+  if (!row) return;
+  const field = el.dataset.field;
+  row[field] = (el.type === 'number') ? (el.value === '' ? '' : Number(el.value)) : el.value;
+
+  const settle  = calcSettlement(row);
+  const hasData = row.original !== '';
+  const sView   = tr.querySelector(`[data-settle-view="${rowId}"]`);
+  if (sView) sView.textContent = hasData ? fmtNum(settle) : '--';
+
+  if (field !== 'status') {
+    const viewSpan = el.previousElementSibling;
+    if (viewSpan && viewSpan.classList.contains('cell-view')) {
+      const val = el.type === 'number' ? (row[field] !== '' ? fmtNum(row[field]) : '--') : (el.value || '--');
+      viewSpan.textContent = val;
+      viewSpan.classList.toggle('empty', !el.value && el.value !== 0);
+    }
+  } else {
+    const viewWrap = el.closest('td').querySelector('.cell-view');
+    if (viewWrap) {
+      viewWrap.innerHTML = row.status
+        ? `<span class="status-badge sb-${row.status}">${row.status}</span>`
+        : `<span class="cell-view empty">--</span>`;
+    }
+    el.className = 'status ' + statusCls(row.status);
+  }
+  updateSummary();
+}
+
+function updateSummary() {
+  const settle = rows.reduce((s,r) => s + calcSettlement(r), 0);
+  document.getElementById('sumSettlement').textContent = '¥' + settle.toLocaleString();
+  updateGoalChart(settle);
+  updateKoushuSummary();
+}
+
+function onGoalInput(el) {
+  // カンマを除いた数字のみ取得
+  const raw = el.value.replace(/,/g, '').replace(/[^0-9]/g, '');
+  if (raw === '') { el.value = ''; updateGoalChart(); return; }
+  // カーソル位置を保持しながらカンマ付きに整形
+  const formatted = Number(raw).toLocaleString();
+  el.value = formatted;
+  updateGoalChart();
+}
+
+// 工種ごとの固有カラー（バッジ・カードと連動）
+const KOUSHU_CARD_COLOR = {
+  '橋梁点検':      { border: '#4a82c4', bg: '#eef5ff', text: '#2a5fa0' },
+  'トンネル点検':  { border: '#2ea860', bg: '#edfaf3', text: '#1e7a48' },
+  '附属物点検':    { border: '#d07020', bg: '#fff5ea', text: '#b05a10' },
+  '覆工構造物点検':{ border: '#8a50c8', bg: '#f5eeff', text: '#6a3a9a' },
+  'その他':        { border: '#999999', bg: '#f4f4f4', text: '#555555' },
+};
+
+function getDonutColor(over, ratePct) {
+  return over ? '#5a9ad4' : ratePct >= 80 ? '#80b8d8' : '#d4a870';
+}
+
+function updateKoushuSummary() {
+  const wrap = document.getElementById('koushuSummary');
+  if (!wrap) return;
+  wrap.innerHTML = '';
+
+  const hasAny = rows.some(r => r.koushu);
+  if (!hasAny) {
+    const ph = document.createElement('div');
+    ph.className = 'ks-card';
+    ph.style.cssText = 'border-left:3px solid #aaa;';
+    ph.innerHTML = `<span class="ks-label" style="color:var(--text-muted);font-style:italic">工種を設定すると集計が表示されます</span>`;
+    wrap.appendChild(ph);
+    return;
+  }
+
+  KOUSHU_LIST.forEach(k => {
+    const matched = rows.filter(r => r.koushu === k);
+    if (matched.length === 0) return;
+    const total = matched.reduce((s, r) => s + calcSettlement(r), 0);
+    const col = KOUSHU_CARD_COLOR[k] || { border: '#aaa', bg: '#f4f4f4', text: '#555' };
+    const card = document.createElement('div');
+    card.className = 'ks-card';
+    card.style.cssText = `border-left: 4px solid ${col.border}; background: ${col.bg};`;
+    card.innerHTML = `
+      <span class="ks-label" style="color:${col.text};font-weight:600">${k}</span>
+      <span class="ks-val" style="color:${col.text}">¥${total.toLocaleString()}</span>
+      <span class="ks-cnt">${matched.length}件</span>
+    `;
+    wrap.appendChild(card);
+  });
+}
+
+// ---- 目標売上ドーナッツグラフ ----
+function updateGoalChart(settleOverride) {
+  const settle  = settleOverride !== undefined ? settleOverride : rows.reduce((s,r) => s + calcSettlement(r), 0);
+  const goalVal = Number((document.getElementById('goalInput').value || '').replace(/,/g, '')) || 0;
+  const ratePct = goalVal > 0 ? (settle / goalVal * 100) : 0;
+  const remain  = goalVal > 0 ? Math.max(goalVal - settle, 0) : 0;
+  const over    = settle > goalVal && goalVal > 0;
+  const rate    = goalVal > 0 ? Math.min(settle / goalVal, 1) : 0;
+
+  // 達成率テキスト
+  const rateEl = document.getElementById('goalRate');
+  if (rateEl) {
+    rateEl.textContent = goalVal > 0 ? ratePct.toFixed(1) + '%' : '--%';
+    rateEl.style.color = over ? 'var(--success)' : ratePct >= 80 ? 'var(--warning)' : 'var(--accent)';
+  }
+
+  // サブテキスト
+  const subEl = document.getElementById('goalSubText');
+  if (subEl) {
+    if (goalVal <= 0) {
+      subEl.textContent = '目標金額を入力してください';
+      subEl.style.color = '';
+    } else if (over) {
+      subEl.textContent = '🎉 目標達成！';
+      subEl.style.color = 'var(--success)';
+    } else {
+      subEl.textContent = `残り ¥${remain.toLocaleString()} で達成`;
+      subEl.style.color = 'var(--text-muted)';
+    }
+  }
+
+  // 詳細カード
+  const gdS = document.getElementById('gdSettlement');
+  const gdG = document.getElementById('gdGoal');
+  const gdR = document.getElementById('gdRemain');
+  if (gdS) gdS.textContent = '¥' + settle.toLocaleString();
+  if (gdG) gdG.textContent = goalVal > 0 ? '¥' + goalVal.toLocaleString() : '--';
+  if (gdR) {
+    if (goalVal <= 0) {
+      gdR.textContent = '--'; gdR.className = 'goal-detail-val';
+    } else if (over) {
+      gdR.textContent = '+¥' + (settle - goalVal).toLocaleString() + ' 超過達成';
+      gdR.className = 'goal-detail-val success';
+    } else {
+      gdR.textContent = '¥' + remain.toLocaleString();
+      gdR.className = 'goal-detail-val rose';
+    }
+  }
+
+  drawDonutCanvas(rate, over, ratePct);
+
+  if (goalVal > 0) localStorage.setItem(goalKey(activeYear), goalVal);
+}
+
+function drawDonutCanvas(rate, over, ratePct) {
+  const canvas = document.getElementById('goalChart');
+  if (!canvas) return;
+
+  // デバイスピクセル比対応
+  const dpr  = window.devicePixelRatio || 1;
+  const size = 72;
+  canvas.width  = size * dpr;
+  canvas.height = size * dpr;
+  canvas.style.width  = size + 'px';
+  canvas.style.height = size + 'px';
+
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+
+  const cx = size / 2, cy = size / 2;
+  const R  = size / 2 - 3;
+  const r  = R * 0.58;
+
+  const cs = getComputedStyle(document.documentElement);
+  const filledColor = getDonutColor(over, ratePct);
+  const emptyColor  = '#e0e0e2';
+
+  ctx.clearRect(0, 0, size, size);
+
+  // 背景リング
+  ctx.beginPath();
+  ctx.arc(cx, cy, R, 0, 2 * Math.PI);
+  ctx.arc(cx, cy, r, 2 * Math.PI, 0, true);
+  ctx.fillStyle = emptyColor;
+  ctx.fill();
+
+  // 達成分
+  const v = Math.max(0, Math.min(rate, 1));
+  if (v > 0) {
+    const start = -Math.PI / 2;
+    const end   = start + 2 * Math.PI * v;
+    ctx.beginPath();
+    ctx.arc(cx, cy, R, start, end);
+    ctx.arc(cx, cy, r, end, start, true);
+    ctx.closePath();
+    ctx.fillStyle = filledColor;
+    ctx.fill();
+  }
+}
+
+function addRow() {
+  if (!isEditMode) return;
+  const r = makeEmptyRow();
+  rows.push(r);
+  document.getElementById('noData').style.display = 'none';
+  const tbody = document.getElementById('tableBody');
+  const tr = document.createElement('tr');
+  tr.dataset.id = r.id;
+  tr.innerHTML = buildRowHTML(r, rows.length);
+  tbody.appendChild(tr);
+  bindRowEvents(tr, r.id);
+  tr.scrollIntoView({behavior:'smooth', block:'nearest'});
+  updateSummary();
+}
+
+function deleteRow(rowId) {
+  if (!confirm('この行を削除しますか？')) return;
+  rows = rows.filter(r => r.id !== rowId);
+  renderAll();
+  showToast('削除しました');
+}
+
+function saveAll() {
+  saveCurrentYear();
+  showToast('✅ ローカルに保存しました');
+  if (USE_SUPABASE) {
+    saveToSupabase().then(() => showToast('☁️ クラウドにも保存しました'));
+  }
+}
+
+function openModal(type) {
+  if (!isEditMode) return;
+  openListModal(type);
+}
+function closeModal() { document.getElementById('modalOverlay').classList.remove('show'); }
+function saveModal() {
+  const val = document.getElementById('modalInput').value.trim();
+  if (!val) { showToast('名称を入力してください', true); return; }
+  if (modalType === 'customer') {
+    if (customers.includes(val)) { showToast('既に登録されています', true); return; }
+    customers.push(val);
+    showToast('顧客「' + val + '」を登録しました');
+  } else {
+    if (orderers.includes(val))  { showToast('既に登録されています', true); return; }
+    orderers.push(val);
+    showToast('発注者「' + val + '」を登録しました');
+  }
+  localStorage.setItem(CUSTOMERS_KEY, JSON.stringify(customers));
+  localStorage.setItem(ORDERERS_KEY,  JSON.stringify(orderers));
+  closeModal();
+  renderAll();
+}
+document.getElementById('modalOverlay').addEventListener('click', e => {
+  if (e.target === document.getElementById('modalOverlay')) closeModal();
+});
+document.getElementById('modalInput').addEventListener('keydown', e => { if (e.key==='Enter') saveModal(); });
+
+// ===== リスト管理モーダル =====
+let listModalType = '';
+
+function openListModal(type) {
+  if (!isEditMode) return;
+  listModalType = type;
+  document.getElementById('listModalTitle').textContent =
+    type === 'customer' ? '👤 顧客リスト管理' : '🏢 発注者リスト管理';
+  document.getElementById('listNewInput').value = '';
+  renderListItems();
+  document.getElementById('listModalOverlay').classList.add('show');
+  setTimeout(() => document.getElementById('listNewInput').focus(), 80);
+}
+
+function closeListModal() {
+  // 編集中のinputを確定保存してから閉じる
+  document.querySelectorAll('.list-item-name').forEach(inp => {
+    const idx = Number(inp.dataset.idx);
+    const val = inp.value.trim();
+    if (val) {
+      if (listModalType === 'customer') customers[idx] = val;
+      else orderers[idx] = val;
+    }
+  });
+  saveListData();
+  renderAll();
+  document.getElementById('listModalOverlay').classList.remove('show');
+}
+
+function renderListItems() {
+  const list = listModalType === 'customer' ? customers : orderers;
+  const wrap = document.getElementById('listItems');
+  wrap.innerHTML = '';
+  list.forEach((name, idx) => {
+    const item = document.createElement('div');
+    item.className = 'list-item';
+    item.innerHTML = `
+      <span class="list-item-num">${idx + 1}</span>
+      <input class="list-item-name" type="text" value="${esc(name)}" data-idx="${idx}"
+        onblur="listUpdateItem(this)" onkeydown="if(event.key==='Enter')this.blur()">
+      <button class="list-item-del" onclick="listDeleteItem(${idx})" title="削除">🗑</button>
+    `;
+    wrap.appendChild(item);
+  });
+}
+
+function listAddItem() {
+  const val = document.getElementById('listNewInput').value.trim();
+  if (!val) { showToast('名称を入力してください', true); return; }
+  const list = listModalType === 'customer' ? customers : orderers;
+  if (list.includes(val)) { showToast('既に登録されています', true); return; }
+  list.push(val);
+  saveListData();
+  document.getElementById('listNewInput').value = '';
+  renderListItems();
+  showToast('「' + val + '」を追加しました');
+}
+
+function listUpdateItem(inp) {
+  const idx = Number(inp.dataset.idx);
+  const val = inp.value.trim();
+  if (!val) { showToast('名称が空です', true); inp.value = listModalType === 'customer' ? customers[idx] : orderers[idx]; return; }
+  if (listModalType === 'customer') customers[idx] = val;
+  else orderers[idx] = val;
+  saveListData();
+}
+
+function listDeleteItem(idx) {
+  const list = listModalType === 'customer' ? customers : orderers;
+  const name = list[idx];
+  if (!confirm(`「${name}」を削除しますか？`)) return;
+  list.splice(idx, 1);
+  saveListData();
+  renderListItems();
+  showToast(`「${name}」を削除しました`);
+}
+
+function saveListData() {
+  localStorage.setItem(CUSTOMERS_KEY, JSON.stringify(customers));
+  localStorage.setItem(ORDERERS_KEY,  JSON.stringify(orderers));
+}
+
+document.getElementById('listModalOverlay').addEventListener('click', e => {
+  if (e.target === document.getElementById('listModalOverlay')) closeListModal();
+});
+document.getElementById('listNewInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') listAddItem();
+});
+
+function exportCSV() {
+  const h = ['No','顧客','業務名','発注者','当初契約','増工','減額','精算','契約状況',
+    '中間1予定月','中間1金額','中間2予定月','中間2金額','最終予定月','最終金額',
+    '数量','窓口'];
+  const lines = [h.join(',')];
+  rows.forEach((r, i) => {
+    const s = calcSettlement(r);
+    const f = calcFinal(r, s);
+    lines.push([i+1, r.customer, '"'+r.name+'"', r.orderer,
+      r.original, r.addition, r.deduction, s, r.status,
+      r.mid1month, r.mid1amount, r.mid2month, r.mid2amount, r.finalmonth, f,
+      r.qty, r.staff].join(','));
+  });
+  const blob = new Blob(['\uFEFF'+lines.join('\n')], {type:'text/csv;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = '業務請負一覧表.csv'; a.click();
+  URL.revokeObjectURL(url);
+}
+
+function confirmClearAll() {
+  if (!isEditMode) return;
+  if (!confirm('全データを削除しますか？\nこの操作は元に戻せません。')) return;
+  rows = [];
+  localStorage.removeItem(rowKey(activeYear));
+  renderAll();
+  showToast('全データを削除しました');
+}
+
+function diagStorage() {
+  const allKeys = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const k = localStorage.key(i);
+    if (k && k.indexOf('flexdesign') !== -1) allKeys.push(k);
+  }
+
+  if (allKeys.length === 0) {
+    alert('ローカルストレージにflex designのデータが見つかりませんでした。\nデータが保存されていない可能性があります。');
+    return;
+  }
+
+  let msg = '【保存データ一覧】\n\n';
+  allKeys.sort().forEach(k => {
+    const val = localStorage.getItem(k);
+    let info = val ? val.length + '文字' : '空';
+    // 行データの場合は件数も表示
+    if (k.indexOf('rows') !== -1 && val) {
+      try { info = JSON.parse(val).length + '行'; } catch(e) {}
+    }
+    msg += k + ' : ' + info + '\n';
+  });
+
+  msg += '\n---\n強制移行を実行しますか？（v4・v5→v6へコピー）';
+
+  if (confirm(msg)) {
+    forceMigrate();
+  }
+}
+
+function forceMigrate() {
+  // 移行済みフラグを削除して再移行
+  localStorage.removeItem('flexdesign_migrated_v6');
+
+  // v4キーからも移行
+  const v4Single = localStorage.getItem('flexdesign_gyomu_v4');
+  if (v4Single && !localStorage.getItem(rowKey(2025))) {
+    localStorage.setItem(rowKey(2025), v4Single);
+  }
+  const v4Cust = localStorage.getItem('flexdesign_customers_v4');
+  if (v4Cust && !localStorage.getItem(CUSTOMERS_KEY)) {
+    localStorage.setItem(CUSTOMERS_KEY, v4Cust);
+  }
+  const v4Ord = localStorage.getItem('flexdesign_orderers_v4');
+  if (v4Ord && !localStorage.getItem(ORDERERS_KEY)) {
+    localStorage.setItem(ORDERERS_KEY, v4Ord);
+  }
+
+  // v5移行実行
+  migrateFromV5();
+
+  showToast('✅ データ移行を実行しました。再読み込みします...');
+  setTimeout(() => location.reload(), 1500);
+}
+
+function showToast(msg, isError=false) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (isError ? ' error' : '');
+  setTimeout(() => { t.className = 'toast'; }, 2800);
+}
+
+init();
+</script>
+</body>
+</html>
