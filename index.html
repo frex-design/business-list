@@ -2061,6 +2061,25 @@ document.getElementById('listNewInput').addEventListener('keydown', e => {
   if (e.key === 'Enter') listAddItem();
 });
 
+function exportCSV() {
+  const h = ['No','顧客','業務名','発注者','当初契約','増工','減額','精算','契約状況',
+    '中間1予定月','中間1金額','中間2予定月','中間2金額','最終予定月','最終金額',
+    '数量','窓口'];
+  const lines = [h.join(',')];
+  rows.forEach((r, i) => {
+    const s = calcSettlement(r);
+    const f = calcFinal(r, s);
+    lines.push([i+1, r.customer, '"'+r.name+'"', r.orderer,
+      r.original, r.addition, r.deduction, s, r.status,
+      r.mid1month, r.mid1amount, r.mid2month, r.mid2amount, r.finalmonth, f,
+      r.qty, r.staff].join(','));
+  });
+  const blob = new Blob(['\uFEFF'+lines.join('\n')], {type:'text/csv;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = '業務請負一覧表.csv'; a.click();
+  URL.revokeObjectURL(url);
+}
+
 // ===== CSV取込 =====
 let csvImportRows = [];
 
