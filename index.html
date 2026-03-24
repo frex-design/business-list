@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>業務請負一覧表 | 株式会社フレックスデザイン</title>
+<title>業務請負管理システム | 株式会社フレックスデザイン</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -514,7 +514,9 @@
   .toast.error { border-color: var(--danger); color: var(--danger); }
 
   /* ===== 業務進捗パネル ===== */
-  .t-prog .tab-dot { background: #5a8ac8; }
+  .t-partner .tab-dot { background: #0891b2; }
+  .tab-btn.t-partner.active { background: #0891b2; border-color: #0891b2; color: white; }
+  .table-container.partner-tbl { min-width: 900px; }
 
   .prog-wrap {
     padding: 16px 24px;
@@ -728,7 +730,7 @@
   <div class="header-left">
     <div class="header-brand">⚪ FRe:x Design inc. <span class="header-sep">|</span></div>
     <div class="header-title">
-      <h1>業務請負一覧表</h1>
+      <h1>業務請負管理システム</h1>
     </div>
   </div>
   <div class="header-meta">
@@ -740,6 +742,7 @@
 <div class="toolbar">
   <button class="btn btn-ghost" id="btnCustReg" onclick="openListModal('customer')" disabled>👤 顧客リスト管理</button>
   <button class="btn btn-ghost" id="btnOrdReg"  onclick="openListModal('orderer')"  disabled>🏢 発注者リスト管理</button>
+  <button class="btn btn-ghost" id="btnPartnerReg" onclick="openListModal('partner')" disabled>🤝 協力会社リスト管理</button>
   <div class="sep"></div>
   <button class="btn btn-ghost" onclick="exportCSV()">📥 CSV出力</button>
   <button class="btn btn-ghost" onclick="document.getElementById('csvFileInput').click()">📤 CSV取込</button>
@@ -794,6 +797,9 @@
   <button class="tab-btn t-main active" onclick="switchTab('main')">
     <span class="tab-dot"></span>業務一覧
   </button>
+  <button class="tab-btn t-partner" onclick="switchTab('partner')">
+    <span class="tab-dot"></span>協力会社管理
+  </button>
   <button class="tab-btn t-pay" onclick="switchTab('pay')">
     <span class="tab-dot"></span>支払管理（中間①・中間②・最終）
   </button>
@@ -833,6 +839,32 @@
       </table>
       <div id="noData" class="no-data" style="display:none;">
         <span>📋</span>データがありません。編集モードにして「新規行追加」で業務を追加してください。
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== PANEL: 協力会社管理 ===== -->
+<div class="tab-panel" id="panel-partner">
+  <div class="panel-scroll">
+    <div class="table-container partner-tbl">
+      <table id="partnerTable">
+        <thead>
+          <tr>
+            <th style="width:40px">#</th>
+            <th style="width:200px">業務名</th>
+            <th style="width:90px">現場責任者</th>
+            <th style="width:130px">協力会社</th>
+            <th style="width:110px">見積額（円）</th>
+            <th style="width:110px">請求額（円）</th>
+            <th style="width:110px">契約状況</th>
+            <th style="width:90px">支払月</th>
+          </tr>
+        </thead>
+        <tbody id="partnerBody"></tbody>
+      </table>
+      <div id="noDataPartner" class="no-data" style="display:none;">
+        <span>🤝</span>編集モードで「新規行追加」をクリックしてください。
       </div>
     </div>
   </div>
@@ -971,6 +1003,7 @@ const ORDERERS_KEY    = 'flexdesign_orderers_v6';
 const GOAL_KEY        = 'flexdesign_goal_v6';
 const YEARS_KEY       = 'flexdesign_years_v6';
 const ACTIVE_YEAR_KEY = 'flexdesign_active_year_v6';
+const PARTNERS_KEY    = 'flexdesign_partners_v6';
 
 // ===== Supabase設定 =====
 // ★ 以下をご自身のSupabaseプロジェクトの値に変更してください
@@ -1071,6 +1104,8 @@ const MONTHS = ['4月','5月','6月','7月','8月','9月','10月','11月','12月
 const KOUSHU_LIST  = ['橋梁点検','トンネル点検','附属物点検','覆工構造物点検','その他'];
 const KOUSHU_SHORT = { '橋梁点検':'橋', 'トンネル点検':'ト', '附属物点検':'附', '覆工構造物点検':'覆', 'その他':'他' };
 const KOUSHU_COLOR = { '橋梁点検':'#5a8fc4', 'トンネル点検':'#7a9e5a', '附属物点検':'#c4924a', '覆工構造物点検':'#9a6ab4', 'その他':'#888' };
+const PARTNER_STATUSES = ['見積書請求中','契約中','請求書受取済','支払済'];
+const DEFAULT_PARTNERS = [];
 const CONTRACT_STATUSES = ['見積書作成中','見積書提出済','契約済','中間請求済','納品請求済','変更契約待','最終契約待','その他'];
 const STAFF = ['加瀬谷','星野','佐藤','二木','渡部','藤岡','本間','堀井','その他'];
 
@@ -1104,6 +1139,9 @@ const DEFAULT_ORDERERS  = [
 let rows = [];
 let customers = [];
 let orderers  = [];
+let partners  = []; // 協力会社リスト
+let partnerRows = []; // 協力会社管理の行データ（年度別）
+let partnerIdCounter = 1;
 let modalType = '';
 let rowIdCounter = 1;
 let isEditMode = false;
@@ -1123,8 +1161,10 @@ async function init() {
 
   const sc = localStorage.getItem(CUSTOMERS_KEY);
   const so = localStorage.getItem(ORDERERS_KEY);
+  const sp = localStorage.getItem(PARTNERS_KEY);
   customers = sc ? JSON.parse(sc) : [...DEFAULT_CUSTOMERS];
   orderers  = so ? JSON.parse(so) : [...DEFAULT_ORDERERS];
+  partners  = sp ? JSON.parse(sp) : [...DEFAULT_PARTNERS];
 
   // 年度リスト初期化（2025年度〜現在の会計年度まで）
   const curFY = getCurrentFiscalYear();
@@ -1218,12 +1258,21 @@ function loadYearData(yr) {
     rows = [makeEmptyRow(), makeEmptyRow()];
   }
 
+  // 協力会社管理データ
+  const spr = localStorage.getItem(partnerRowKey(yr));
+  if (spr) {
+    partnerRows = JSON.parse(spr);
+    partnerIdCounter = partnerRows.reduce((m, r) => Math.max(m, r.id || 0), 0) + 1;
+  } else {
+    partnerIdCounter = 1;
+    partnerRows = [];
+  }
+
   // 目標金額
   const sg = localStorage.getItem(goalKey(yr));
   const inp = document.getElementById('goalInput');
   if (inp) {
     const saved = sg || '';
-    // 保存値にカンマを付けて表示
     inp.value = saved ? Number(saved).toLocaleString() : '';
   }
 
@@ -1312,8 +1361,10 @@ function deleteYear(yr) {
 
 function saveCurrentYear() {
   localStorage.setItem(rowKey(activeYear), JSON.stringify(rows));
+  localStorage.setItem(partnerRowKey(activeYear), JSON.stringify(partnerRows));
   localStorage.setItem(CUSTOMERS_KEY, JSON.stringify(customers));
   localStorage.setItem(ORDERERS_KEY, JSON.stringify(orderers));
+  localStorage.setItem(PARTNERS_KEY, JSON.stringify(partners));
   const goalVal = Number((document.getElementById('goalInput')?.value || '').replace(/,/g, '')) || 0;
   if (goalVal) localStorage.setItem(goalKey(activeYear), goalVal);
 }
@@ -1340,8 +1391,9 @@ function switchTab(tab) {
   document.getElementById('panel-' + tab).classList.add('active');
   document.querySelector('.tab-btn.t-' + tab).classList.add('active');
 
-  if (tab === 'pay')  renderPayPanel();
-  if (tab === 'prog') renderProgPanel();
+  if (tab === 'pay')     renderPayPanel();
+  if (tab === 'prog')    renderProgPanel();
+  if (tab === 'partner') renderPartnerPanel();
 }
 
 // ---- EDIT MODE ----
@@ -1354,9 +1406,11 @@ function toggleEditMode() {
   document.getElementById('btnAdd').disabled  = false;
   const cust = document.getElementById('btnCustReg');
   const ord  = document.getElementById('btnOrdReg');
+  const prt  = document.getElementById('btnPartnerReg');
   const clr  = document.getElementById('btnClear');
   if (cust) cust.disabled = false;
   if (ord)  ord.disabled  = false;
+  if (prt)  prt.disabled  = false;
   if (clr)  clr.disabled  = false;
   document.querySelectorAll('#tableBody tr').forEach(tr => tr.setAttribute('draggable', 'true'));
 }
@@ -1370,9 +1424,11 @@ function exitEditMode() {
   document.getElementById('btnAdd').disabled  = true;
   const cust = document.getElementById('btnCustReg');
   const ord  = document.getElementById('btnOrdReg');
+  const prt  = document.getElementById('btnPartnerReg');
   const clr  = document.getElementById('btnClear');
   if (cust) cust.disabled = true;
   if (ord)  ord.disabled  = true;
+  if (prt)  prt.disabled  = true;
   if (clr)  clr.disabled  = true;
   document.querySelectorAll('#tableBody tr').forEach(tr => tr.setAttribute('draggable', 'false'));
 }
@@ -1404,8 +1460,9 @@ function renderAll() {
   });
 
   // 支払タブも更新
-  if (currentTab === 'pay')  renderPayPanel();
-  if (currentTab === 'prog') renderProgPanel();
+  if (currentTab === 'pay')     renderPayPanel();
+  if (currentTab === 'prog')    renderProgPanel();
+  if (currentTab === 'partner') renderPartnerPanel();
   updateSummary();
 }
 
@@ -1686,6 +1743,127 @@ function saveProgUpdated(val) {
   if (viewEl) viewEl.textContent = val || '未設定';
 }
 
+// ---- 協力会社管理 キー ----
+function partnerRowKey(yr) { return `flexdesign_partner_rows_${yr}`; }
+
+function makeEmptyPartnerRow() {
+  return {
+    id: partnerIdCounter++,
+    gyomuName: '', responsible: '', partner: '',
+    estimate: '', billing: '', pStatus: '', payMonth: ''
+  };
+}
+
+// ---- 新規行追加（協力会社タブ用） ----
+function addPartnerRow() {
+  if (currentTab !== 'partner') { addRow(); return; }
+  partnerRows.push(makeEmptyPartnerRow());
+  renderPartnerPanel();
+}
+
+// ---- 協力会社パネル描画 ----
+function renderPartnerPanel() {
+  const tbody  = document.getElementById('partnerBody');
+  const noData = document.getElementById('noDataPartner');
+  if (!tbody) return;
+  tbody.innerHTML = '';
+
+  if (partnerRows.length === 0) {
+    noData.style.display = 'block'; return;
+  }
+  noData.style.display = 'none';
+
+  partnerRows.forEach((row, idx) => {
+    const tr = document.createElement('tr');
+    tr.dataset.pid = row.id;
+
+    // 業務名プルダウン（業務一覧から）
+    const gyomuOpts = ['', ...rows.filter(r => r.name).map(r => r.name)]
+      .map(n => `<option value="${esc(n)}" ${n===row.gyomuName?'selected':''}>${esc(n)||'-- 選択 --'}</option>`).join('');
+
+    // 現場責任者（STAFFリスト）
+    const respOpts = ['', ...STAFF]
+      .map(s => `<option value="${esc(s)}" ${s===row.responsible?'selected':''}>${esc(s)||'-- 選択 --'}</option>`).join('');
+
+    // 協力会社リスト
+    const partnerOpts = ['', ...partners]
+      .map(p => `<option value="${esc(p)}" ${p===row.partner?'selected':''}>${esc(p)||'-- 選択 --'}</option>`).join('');
+
+    // 協力会社契約状況
+    const pStatusOpts = ['', ...PARTNER_STATUSES]
+      .map(s => `<option value="${s}" ${s===row.pStatus?'selected':''}>${s||'-- 選択 --'}</option>`).join('');
+
+    // 支払月
+    const payOpts = ['', ...MONTHS]
+      .map(m => `<option value="${m}" ${m===row.payMonth?'selected':''}>${m||'--'}</option>`).join('');
+
+    tr.innerHTML = `
+      <td class="row-num-cell" style="text-align:center;color:var(--text-muted);font-size:11px">${idx+1}
+        <button class="btn-del" onclick="deletePartnerRow(${row.id})" title="削除">✕</button>
+      </td>
+      <td>
+        <span class="cell-view ${row.gyomuName?'':'empty'}">${esc(row.gyomuName)||'--'}</span>
+        <select data-pfield="gyomuName">${gyomuOpts}</select>
+      </td>
+      <td style="text-align:center">
+        <span class="cell-view center ${row.responsible?'':'empty'}">${esc(row.responsible)||'--'}</span>
+        <select data-pfield="responsible">${respOpts}</select>
+      </td>
+      <td>
+        <span class="cell-view ${row.partner?'':'empty'}">${esc(row.partner)||'--'}</span>
+        <select data-pfield="partner">${partnerOpts}</select>
+      </td>
+      <td style="text-align:right">
+        <span class="cell-view num ${row.estimate!==''?'':'empty'}">${row.estimate!==''?'¥ '+Number(row.estimate).toLocaleString():'--'}</span>
+        <input type="number" data-pfield="estimate" value="${row.estimate}" placeholder="0">
+      </td>
+      <td style="text-align:right">
+        <span class="cell-view num ${row.billing!==''?'':'empty'}">${row.billing!==''?'¥ '+Number(row.billing).toLocaleString():'--'}</span>
+        <input type="number" data-pfield="billing" value="${row.billing}" placeholder="0">
+      </td>
+      <td style="text-align:center">
+        <span class="cell-view center ${row.pStatus?'':'empty'}">${esc(row.pStatus)||'--'}</span>
+        <select data-pfield="pStatus">${pStatusOpts}</select>
+      </td>
+      <td style="text-align:center">
+        <span class="cell-view center ${row.payMonth?'':'empty'}">${esc(row.payMonth)||'--'}</span>
+        <select data-pfield="payMonth">${payOpts}</select>
+      </td>
+    `;
+
+    tbody.appendChild(tr);
+
+    // イベントバインド
+    tr.querySelectorAll('[data-pfield]').forEach(el => {
+      el.addEventListener('change', () => updatePartnerField(row.id, el));
+      el.addEventListener('input',  () => updatePartnerField(row.id, el));
+    });
+  });
+}
+
+function updatePartnerField(rowId, el) {
+  const row = partnerRows.find(r => r.id === rowId);
+  if (!row) return;
+  row[el.dataset.pfield] = el.value;
+  // view spanをリアルタイム更新
+  const td = el.closest('td');
+  const view = td.querySelector('.cell-view');
+  if (!view) return;
+  const f = el.dataset.pfield;
+  if (f === 'estimate' || f === 'billing') {
+    view.textContent = el.value !== '' ? '¥ ' + Number(el.value).toLocaleString() : '--';
+    view.classList.toggle('empty', el.value === '');
+  } else {
+    view.textContent = el.value || '--';
+    view.classList.toggle('empty', !el.value);
+  }
+}
+
+function deletePartnerRow(id) {
+  partnerRows = partnerRows.filter(r => r.id !== id);
+  renderPartnerPanel();
+}
+
 function statusBadgeHtml(status) {
   if (!status) return `<span style="color:var(--text-muted)">--</span>`;
   return `<span class="status-badge sb-${status}">${status}</span>`;
@@ -1959,6 +2137,11 @@ function drawDonutCanvas(rate, over, ratePct) {
 }
 
 function addRow() {
+  if (currentTab === 'partner') {
+    partnerRows.push(makeEmptyPartnerRow());
+    renderPartnerPanel();
+    return;
+  }
   if (!isEditMode) return;
   const r = makeEmptyRow();
   rows.push(r);
@@ -2021,8 +2204,8 @@ let listModalType = '';
 function openListModal(type) {
   if (!isEditMode) return;
   listModalType = type;
-  document.getElementById('listModalTitle').textContent =
-    type === 'customer' ? '👤 顧客リスト管理' : '🏢 発注者リスト管理';
+  const titles = { customer: '👤 顧客リスト管理', orderer: '🏢 発注者リスト管理', partner: '🤝 協力会社リスト管理' };
+  document.getElementById('listModalTitle').textContent = titles[type] || 'リスト管理';
   document.getElementById('listNewInput').value = '';
   renderListItems();
   document.getElementById('listModalOverlay').classList.add('show');
@@ -2031,21 +2214,25 @@ function openListModal(type) {
 
 function closeListModal() {
   // 編集中のinputを確定保存してから閉じる
+  const list = getListByType(listModalType);
   document.querySelectorAll('.list-item-name').forEach(inp => {
     const idx = Number(inp.dataset.idx);
     const val = inp.value.trim();
-    if (val) {
-      if (listModalType === 'customer') customers[idx] = val;
-      else orderers[idx] = val;
-    }
+    if (val && idx < list.length) list[idx] = val;
   });
   saveListData();
   renderAll();
   document.getElementById('listModalOverlay').classList.remove('show');
 }
 
+function getListByType(type) {
+  if (type === 'customer') return customers;
+  if (type === 'orderer')  return orderers;
+  return partners;
+}
+
 function renderListItems() {
-  const list = listModalType === 'customer' ? customers : orderers;
+  const list = getListByType(listModalType);
   const wrap = document.getElementById('listItems');
   wrap.innerHTML = '';
   list.forEach((name, idx) => {
@@ -2064,7 +2251,7 @@ function renderListItems() {
 function listAddItem() {
   const val = document.getElementById('listNewInput').value.trim();
   if (!val) { showToast('名称を入力してください', true); return; }
-  const list = listModalType === 'customer' ? customers : orderers;
+  const list = getListByType(listModalType);
   if (list.includes(val)) { showToast('既に登録されています', true); return; }
   list.push(val);
   saveListData();
@@ -2076,14 +2263,14 @@ function listAddItem() {
 function listUpdateItem(inp) {
   const idx = Number(inp.dataset.idx);
   const val = inp.value.trim();
-  if (!val) { showToast('名称が空です', true); inp.value = listModalType === 'customer' ? customers[idx] : orderers[idx]; return; }
-  if (listModalType === 'customer') customers[idx] = val;
-  else orderers[idx] = val;
+  const list = getListByType(listModalType);
+  if (!val) { showToast('名称が空です', true); inp.value = list[idx]; return; }
+  list[idx] = val;
   saveListData();
 }
 
 function listDeleteItem(idx) {
-  const list = listModalType === 'customer' ? customers : orderers;
+  const list = getListByType(listModalType);
   const name = list[idx];
   if (!confirm(`「${name}」を削除しますか？`)) return;
   list.splice(idx, 1);
@@ -2095,6 +2282,7 @@ function listDeleteItem(idx) {
 function saveListData() {
   localStorage.setItem(CUSTOMERS_KEY, JSON.stringify(customers));
   localStorage.setItem(ORDERERS_KEY,  JSON.stringify(orderers));
+  localStorage.setItem(PARTNERS_KEY,  JSON.stringify(partners));
 }
 
 document.getElementById('listModalOverlay').addEventListener('click', e => {
