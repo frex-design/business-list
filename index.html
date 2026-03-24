@@ -852,13 +852,14 @@
         <thead>
           <tr>
             <th style="width:40px">#</th>
-            <th style="width:200px">業務名</th>
+            <th style="min-width:180px">業務名</th>
+            <th style="width:90px">顧客</th>
             <th style="width:90px">現場責任者</th>
             <th style="width:130px">協力会社</th>
             <th style="width:110px">見積額（円）</th>
             <th style="width:110px">請求額（円）</th>
             <th style="width:110px">契約状況</th>
-            <th style="width:90px">支払月</th>
+            <th style="width:80px">支払月</th>
           </tr>
         </thead>
         <tbody id="partnerBody"></tbody>
@@ -1262,11 +1263,14 @@ function loadYearData(yr) {
   const spr = localStorage.getItem(partnerRowKey(yr));
   if (spr) {
     partnerRows = JSON.parse(spr);
-    partnerIdCounter = partnerRows.reduce((m, r) => Math.max(m, r.id || 0), 0) + 1;
   } else {
-    partnerIdCounter = 1;
     partnerRows = [];
   }
+  // 業務一覧の全rowに対してpartnerRowが存在しない場合は自動補完
+  if (rows.length > 0) {
+    rows.forEach(r => getOrCreatePartnerRow(r.id));
+  }
+  partnerIdCounter = partnerRows.reduce((m, r) => Math.max(m, r.id || 0), 0) + 1;
 
   // 目標金額
   const sg = localStorage.getItem(goalKey(yr));
@@ -1746,19 +1750,22 @@ function saveProgUpdated(val) {
 // ---- 協力会社管理 キー ----
 function partnerRowKey(yr) { return `flexdesign_partner_rows_${yr}`; }
 
-function makeEmptyPartnerRow() {
+function makeEmptyPartnerRow(rowId) {
   return {
-    id: partnerIdCounter++,
-    gyomuName: '', responsible: '', partner: '',
+    id: rowId, // 業務一覧のrow.idと同一
+    responsible: '', partner: '',
     estimate: '', billing: '', pStatus: '', payMonth: ''
   };
 }
 
-// ---- 新規行追加（協力会社タブ用） ----
-function addPartnerRow() {
-  if (currentTab !== 'partner') { addRow(); return; }
-  partnerRows.push(makeEmptyPartnerRow());
-  renderPartnerPanel();
+// 業務一覧rowに対応するpartnerRowを取得（なければ作成）
+function getOrCreatePartnerRow(rowId) {
+  let pr = partnerRows.find(r => r.id === rowId);
+  if (!pr) {
+    pr = makeEmptyPartnerRow(rowId);
+    partnerRows.push(pr);
+  }
+  return pr;
 }
 
 // ---- 協力会社パネル描画 ----
@@ -1768,65 +1775,68 @@ function renderPartnerPanel() {
   if (!tbody) return;
   tbody.innerHTML = '';
 
-  if (partnerRows.length === 0) {
+  // 業務一覧の有効行と連動
+  const activeRows = rows.filter(r => r.customer || r.name);
+
+  if (activeRows.length === 0) {
     noData.style.display = 'block'; return;
   }
   noData.style.display = 'none';
 
-  partnerRows.forEach((row, idx) => {
-    const tr = document.createElement('tr');
-    tr.dataset.pid = row.id;
-
-    // 業務名プルダウン（業務一覧から）
-    const gyomuOpts = ['', ...rows.filter(r => r.name).map(r => r.name)]
-      .map(n => `<option value="${esc(n)}" ${n===row.gyomuName?'selected':''}>${esc(n)||'-- 選択 --'}</option>`).join('');
+  activeRows.forEach((row, idx) => {
+    const pr = getOrCreatePartnerRow(row.id);
 
     // 現場責任者（STAFFリスト）
     const respOpts = ['', ...STAFF]
-      .map(s => `<option value="${esc(s)}" ${s===row.responsible?'selected':''}>${esc(s)||'-- 選択 --'}</option>`).join('');
+      .map(s => `<option value="${esc(s)}" ${s===pr.responsible?'selected':''}>${esc(s)||'-- 選択 --'}</option>`).join('');
 
     // 協力会社リスト
     const partnerOpts = ['', ...partners]
-      .map(p => `<option value="${esc(p)}" ${p===row.partner?'selected':''}>${esc(p)||'-- 選択 --'}</option>`).join('');
+      .map(p => `<option value="${esc(p)}" ${p===pr.partner?'selected':''}>${esc(p)||'-- 選択 --'}</option>`).join('');
 
     // 協力会社契約状況
     const pStatusOpts = ['', ...PARTNER_STATUSES]
-      .map(s => `<option value="${s}" ${s===row.pStatus?'selected':''}>${s||'-- 選択 --'}</option>`).join('');
+      .map(s => `<option value="${s}" ${s===pr.pStatus?'selected':''}>${s||'-- 選択 --'}</option>`).join('');
 
     // 支払月
     const payOpts = ['', ...MONTHS]
-      .map(m => `<option value="${m}" ${m===row.payMonth?'selected':''}>${m||'--'}</option>`).join('');
+      .map(m => `<option value="${m}" ${m===pr.payMonth?'selected':''}>${m||'--'}</option>`).join('');
+
+    const tr = document.createElement('tr');
+    tr.dataset.pid = row.id;
 
     tr.innerHTML = `
-      <td class="row-num-cell" style="text-align:center;color:var(--text-muted);font-size:11px">${idx+1}
-        <button class="btn-del" onclick="deletePartnerRow(${row.id})" title="削除">✕</button>
+      <td class="row-num-cell">
+        <span class="row-num-view">${idx + 1}</span>
       </td>
       <td>
-        <span class="cell-view ${row.gyomuName?'':'empty'}">${esc(row.gyomuName)||'--'}</span>
-        <select data-pfield="gyomuName">${gyomuOpts}</select>
+        <span class="cell-view" style="font-size:12px">${esc(row.name)||'--'}</span>
       </td>
-      <td style="text-align:center">
-        <span class="cell-view center ${row.responsible?'':'empty'}">${esc(row.responsible)||'--'}</span>
+      <td style="font-size:11px;color:var(--text-muted);text-align:center">
+        ${esc(row.customer)||'--'}
+      </td>
+      <td>
+        <span class="cell-view center ${pr.responsible?'':'empty'}">${esc(pr.responsible)||'--'}</span>
         <select data-pfield="responsible">${respOpts}</select>
       </td>
       <td>
-        <span class="cell-view ${row.partner?'':'empty'}">${esc(row.partner)||'--'}</span>
+        <span class="cell-view ${pr.partner?'':'empty'}">${esc(pr.partner)||'--'}</span>
         <select data-pfield="partner">${partnerOpts}</select>
       </td>
       <td style="text-align:right">
-        <span class="cell-view num ${row.estimate!==''?'':'empty'}">${row.estimate!==''?'¥ '+Number(row.estimate).toLocaleString():'--'}</span>
-        <input type="number" data-pfield="estimate" value="${row.estimate}" placeholder="0">
+        <span class="cell-view num ${pr.estimate!==''?'':'empty'}">${pr.estimate!==''?'¥ '+Number(pr.estimate).toLocaleString():'--'}</span>
+        <input type="number" data-pfield="estimate" value="${pr.estimate}" placeholder="0">
       </td>
       <td style="text-align:right">
-        <span class="cell-view num ${row.billing!==''?'':'empty'}">${row.billing!==''?'¥ '+Number(row.billing).toLocaleString():'--'}</span>
-        <input type="number" data-pfield="billing" value="${row.billing}" placeholder="0">
+        <span class="cell-view num ${pr.billing!==''?'':'empty'}">${pr.billing!==''?'¥ '+Number(pr.billing).toLocaleString():'--'}</span>
+        <input type="number" data-pfield="billing" value="${pr.billing}" placeholder="0">
       </td>
       <td style="text-align:center">
-        <span class="cell-view center ${row.pStatus?'':'empty'}">${esc(row.pStatus)||'--'}</span>
+        <span class="cell-view center ${pr.pStatus?'':'empty'}">${esc(pr.pStatus)||'--'}</span>
         <select data-pfield="pStatus">${pStatusOpts}</select>
       </td>
       <td style="text-align:center">
-        <span class="cell-view center ${row.payMonth?'':'empty'}">${esc(row.payMonth)||'--'}</span>
+        <span class="cell-view center ${pr.payMonth?'':'empty'}">${esc(pr.payMonth)||'--'}</span>
         <select data-pfield="payMonth">${payOpts}</select>
       </td>
     `;
@@ -2137,14 +2147,12 @@ function drawDonutCanvas(rate, over, ratePct) {
 }
 
 function addRow() {
-  if (currentTab === 'partner') {
-    partnerRows.push(makeEmptyPartnerRow());
-    renderPartnerPanel();
-    return;
-  }
+  if (currentTab === 'partner') return; // 協力会社タブでは直接追加不可
   if (!isEditMode) return;
   const r = makeEmptyRow();
   rows.push(r);
+  // 協力会社管理に対応行を自動追加
+  partnerRows.push(makeEmptyPartnerRow(r.id));
   document.getElementById('noData').style.display = 'none';
   const tbody = document.getElementById('tableBody');
   const tr = document.createElement('tr');
@@ -2157,8 +2165,9 @@ function addRow() {
 }
 
 function deleteRow(rowId) {
-  if (!confirm('この行を削除しますか？')) return;
+  if (!confirm('この行を削除しますか？\n協力会社管理の対応行も削除されます。')) return;
   rows = rows.filter(r => r.id !== rowId);
+  partnerRows = partnerRows.filter(r => r.id !== rowId);
   renderAll();
   showToast('削除しました');
 }
