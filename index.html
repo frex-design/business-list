@@ -516,7 +516,96 @@
   /* ===== 業務進捗パネル ===== */
   .t-partner .tab-dot { background: #0891b2; }
   .tab-btn.t-partner.active { background: #0891b2; border-color: #0891b2; color: white; }
-  .table-container.partner-tbl { min-width: 900px; }
+
+  /* 協力会社管理パネル */
+  .partner-body { display: flex; flex-direction: column; gap: 10px; }
+
+  .partner-block {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; overflow: hidden;
+  }
+  .partner-block-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 16px; gap: 12px;
+    background: var(--surface2); border-bottom: 1px solid var(--border);
+  }
+  .partner-block-left { display: flex; align-items: center; gap: 10px; }
+  .partner-block-num {
+    font-size: 11px; color: var(--text-muted);
+    width: 20px; text-align: center; flex-shrink: 0;
+  }
+  .partner-block-info { display: flex; flex-direction: column; gap: 2px; }
+  .partner-block-name { font-size: 13px; font-weight: 500; color: var(--text); }
+  .partner-block-sub  { font-size: 11px; color: var(--text-mid); }
+
+  .partner-block-right {
+    display: flex; align-items: center; gap: 8px; flex-shrink: 0;
+  }
+  .partner-resp-label { font-size: 11px; color: var(--text-muted); }
+  .partner-resp-view  {
+    font-size: 12px; font-weight: 500; color: var(--text);
+    min-width: 60px; padding: 3px 8px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 4px;
+  }
+  .partner-resp-sel   { display: none !important; font-size: 12px; }
+  body.edit-mode .partner-resp-view { display: none; }
+  body.edit-mode .partner-resp-sel  { display: block !important; }
+
+  .partner-add-btn {
+    display: none;
+    padding: 4px 10px; border-radius: 6px;
+    border: 1px dashed #0891b2; background: transparent;
+    color: #0891b2; font-size: 11px; cursor: pointer;
+    font-family: 'Noto Sans JP', sans-serif;
+    transition: all 0.15s; white-space: nowrap;
+  }
+  .partner-add-btn:hover { background: #f0fbff; }
+  body.edit-mode .partner-add-btn { display: block; }
+
+  /* エントリーリスト */
+  .partner-entries { padding: 8px 12px; display: flex; flex-direction: column; gap: 6px; }
+  .partner-no-entry { font-size: 11px; color: var(--text-muted); padding: 6px 4px; font-style: italic; }
+
+  .partner-entry {
+    border: 1px solid var(--border2); border-radius: 6px;
+    background: var(--surface2); padding: 8px 10px;
+    transition: background 0.12s;
+  }
+  .partner-entry:hover { background: var(--row-hover); }
+
+  .partner-entry-row {
+    display: flex; align-items: center; gap: 8px; flex-wrap: nowrap;
+  }
+  .partner-entry-cell {
+    display: flex; flex-direction: column; gap: 2px; min-width: 0;
+  }
+  .partner-entry-label {
+    font-size: 9px; color: var(--text-muted); white-space: nowrap;
+  }
+  .partner-entry-cell .cell-view {
+    font-size: 12px; padding: 3px 0; color: var(--text);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .partner-entry-cell select,
+  .partner-entry-cell input[type="number"] {
+    display: none !important; font-size: 11px;
+    padding: 3px 6px; border: 1px solid var(--border);
+    border-radius: 4px; background: var(--surface);
+  }
+  body.edit-mode .partner-entry-cell .cell-view { display: none !important; }
+  body.edit-mode .partner-entry-cell select,
+  body.edit-mode .partner-entry-cell input[type="number"] { display: block !important; width: 100%; }
+
+  .partner-entry-del-wrap { flex-shrink: 0; }
+  .partner-entry-del {
+    display: none;
+    background: none; border: none; cursor: pointer;
+    color: var(--text-muted); font-size: 13px; padding: 4px;
+    border-radius: 4px; transition: all 0.15s;
+  }
+  .partner-entry-del:hover { color: var(--danger); background: #fef2f2; }
+  body.edit-mode .partner-entry-del { display: block; }
 
   .prog-wrap {
     padding: 16px 24px;
@@ -847,26 +936,9 @@
 <!-- ===== PANEL: 協力会社管理 ===== -->
 <div class="tab-panel" id="panel-partner">
   <div class="panel-scroll">
-    <div class="table-container partner-tbl">
-      <table id="partnerTable">
-        <thead>
-          <tr>
-            <th style="width:40px">#</th>
-            <th style="min-width:180px">業務名</th>
-            <th style="width:90px">顧客</th>
-            <th style="width:90px">現場責任者</th>
-            <th style="width:130px">協力会社</th>
-            <th style="width:110px">見積額（円）</th>
-            <th style="width:110px">請求額（円）</th>
-            <th style="width:110px">契約状況</th>
-            <th style="width:80px">支払月</th>
-          </tr>
-        </thead>
-        <tbody id="partnerBody"></tbody>
-      </table>
-      <div id="noDataPartner" class="no-data" style="display:none;">
-        <span>🤝</span>編集モードで「新規行追加」をクリックしてください。
-      </div>
+    <div id="partnerBody" class="partner-body"></div>
+    <div id="noDataPartner" class="no-data" style="display:none;">
+      <span>🤝</span>業務一覧に業務を追加すると表示されます。
     </div>
   </div>
 </div>
@@ -1263,14 +1335,18 @@ function loadYearData(yr) {
   const spr = localStorage.getItem(partnerRowKey(yr));
   if (spr) {
     partnerRows = JSON.parse(spr);
+    migratePartnerRows(); // 旧形式を新形式に変換
   } else {
     partnerRows = [];
   }
-  // 業務一覧の全rowに対してpartnerRowが存在しない場合は自動補完
+  // 業務一覧の全rowに対してpartnerGroupが存在しない場合は自動補完
   if (rows.length > 0) {
-    rows.forEach(r => getOrCreatePartnerRow(r.id));
+    rows.forEach(r => getOrCreatePartnerGroup(r.id));
   }
-  partnerIdCounter = partnerRows.reduce((m, r) => Math.max(m, r.id || 0), 0) + 1;
+  partnerEntryCounter = 1;
+  partnerRows.forEach(pg => pg.entries.forEach(e => {
+    if (e.eid >= partnerEntryCounter) partnerEntryCounter = e.eid + 1;
+  }));
 
   // 目標金額
   const sg = localStorage.getItem(goalKey(yr));
@@ -1750,129 +1826,213 @@ function saveProgUpdated(val) {
 // ---- 協力会社管理 キー ----
 function partnerRowKey(yr) { return `flexdesign_partner_rows_${yr}`; }
 
-function makeEmptyPartnerRow(rowId) {
+let partnerEntryCounter = 1;
+
+function makeEmptyPartnerGroup(rowId) {
   return {
-    id: rowId, // 業務一覧のrow.idと同一
-    responsible: '', partner: '',
-    estimate: '', billing: '', pStatus: '', payMonth: ''
+    rowId: rowId,       // 業務一覧のrow.idと紐付け
+    responsible: '',    // 現場責任者（業務単位）
+    entries: []         // 協力会社エントリーの配列
   };
 }
 
-// 業務一覧rowに対応するpartnerRowを取得（なければ作成）
-function getOrCreatePartnerRow(rowId) {
-  let pr = partnerRows.find(r => r.id === rowId);
-  if (!pr) {
-    pr = makeEmptyPartnerRow(rowId);
-    partnerRows.push(pr);
+function makeEmptyEntry() {
+  return {
+    eid: partnerEntryCounter++,
+    partner: '', estimate: '', billing: '', pStatus: '', payMonth: ''
+  };
+}
+
+// 業務一覧rowIdに対応するpartnerGroupを取得（なければ作成）
+function getOrCreatePartnerGroup(rowId) {
+  let pg = partnerRows.find(r => r.rowId === rowId);
+  if (!pg) {
+    pg = makeEmptyPartnerGroup(rowId);
+    partnerRows.push(pg);
   }
-  return pr;
+  return pg;
+}
+// 後方互換：旧形式(id=rowId)を新形式に変換
+function migratePartnerRows() {
+  partnerRows = partnerRows.map(r => {
+    if (r.rowId !== undefined) return r; // 既に新形式
+    // 旧形式を変換
+    return {
+      rowId: r.id,
+      responsible: r.responsible || '',
+      entries: (r.partner || r.estimate || r.billing || r.pStatus || r.payMonth)
+        ? [{ eid: partnerEntryCounter++, partner: r.partner||'', estimate: r.estimate||'', billing: r.billing||'', pStatus: r.pStatus||'', payMonth: r.payMonth||'' }]
+        : []
+    };
+  });
 }
 
 // ---- 協力会社パネル描画 ----
 function renderPartnerPanel() {
-  const tbody  = document.getElementById('partnerBody');
+  const wrap   = document.getElementById('partnerBody');
   const noData = document.getElementById('noDataPartner');
-  if (!tbody) return;
-  tbody.innerHTML = '';
+  if (!wrap) return;
+  wrap.innerHTML = '';
 
-  // 業務一覧の有効行と連動
   const activeRows = rows.filter(r => r.customer || r.name);
-
   if (activeRows.length === 0) {
     noData.style.display = 'block'; return;
   }
   noData.style.display = 'none';
 
+  const respOpts = (sel) => ['', ...STAFF]
+    .map(s => `<option value="${esc(s)}" ${s===sel?'selected':''}>${esc(s)||'-- 選択 --'}</option>`).join('');
+  const partnerOpts = (sel) => ['', ...partners]
+    .map(p => `<option value="${esc(p)}" ${p===sel?'selected':''}>${esc(p)||'-- 選択 --'}</option>`).join('');
+  const pStatusOpts = (sel) => ['', ...PARTNER_STATUSES]
+    .map(s => `<option value="${s}" ${s===sel?'selected':''}>${s||'-- 選択 --'}</option>`).join('');
+  const payOpts = (sel) => ['', ...MONTHS]
+    .map(m => `<option value="${m}" ${m===sel?'selected':''}>${m||'--'}</option>`).join('');
+
   activeRows.forEach((row, idx) => {
-    const pr = getOrCreatePartnerRow(row.id);
+    const pg = getOrCreatePartnerGroup(row.id);
 
-    // 現場責任者（STAFFリスト）
-    const respOpts = ['', ...STAFF]
-      .map(s => `<option value="${esc(s)}" ${s===pr.responsible?'selected':''}>${esc(s)||'-- 選択 --'}</option>`).join('');
+    // ── 業務ブロック ──
+    const block = document.createElement('div');
+    block.className = 'partner-block';
+    block.dataset.rowid = row.id;
 
-    // 協力会社リスト
-    const partnerOpts = ['', ...partners]
-      .map(p => `<option value="${esc(p)}" ${p===pr.partner?'selected':''}>${esc(p)||'-- 選択 --'}</option>`).join('');
-
-    // 協力会社契約状況
-    const pStatusOpts = ['', ...PARTNER_STATUSES]
-      .map(s => `<option value="${s}" ${s===pr.pStatus?'selected':''}>${s||'-- 選択 --'}</option>`).join('');
-
-    // 支払月
-    const payOpts = ['', ...MONTHS]
-      .map(m => `<option value="${m}" ${m===pr.payMonth?'selected':''}>${m||'--'}</option>`).join('');
-
-    const tr = document.createElement('tr');
-    tr.dataset.pid = row.id;
-
-    tr.innerHTML = `
-      <td class="row-num-cell">
-        <span class="row-num-view">${idx + 1}</span>
-      </td>
-      <td>
-        <span class="cell-view" style="font-size:12px">${esc(row.name)||'--'}</span>
-      </td>
-      <td style="font-size:11px;color:var(--text-muted);text-align:center">
-        ${esc(row.customer)||'--'}
-      </td>
-      <td>
-        <span class="cell-view center ${pr.responsible?'':'empty'}">${esc(pr.responsible)||'--'}</span>
-        <select data-pfield="responsible">${respOpts}</select>
-      </td>
-      <td>
-        <span class="cell-view ${pr.partner?'':'empty'}">${esc(pr.partner)||'--'}</span>
-        <select data-pfield="partner">${partnerOpts}</select>
-      </td>
-      <td style="text-align:right">
-        <span class="cell-view num ${pr.estimate!==''?'':'empty'}">${pr.estimate!==''?'¥ '+Number(pr.estimate).toLocaleString():'--'}</span>
-        <input type="number" data-pfield="estimate" value="${pr.estimate}" placeholder="0">
-      </td>
-      <td style="text-align:right">
-        <span class="cell-view num ${pr.billing!==''?'':'empty'}">${pr.billing!==''?'¥ '+Number(pr.billing).toLocaleString():'--'}</span>
-        <input type="number" data-pfield="billing" value="${pr.billing}" placeholder="0">
-      </td>
-      <td style="text-align:center">
-        <span class="cell-view center ${pr.pStatus?'':'empty'}">${esc(pr.pStatus)||'--'}</span>
-        <select data-pfield="pStatus">${pStatusOpts}</select>
-      </td>
-      <td style="text-align:center">
-        <span class="cell-view center ${pr.payMonth?'':'empty'}">${esc(pr.payMonth)||'--'}</span>
-        <select data-pfield="payMonth">${payOpts}</select>
-      </td>
+    block.innerHTML = `
+      <div class="partner-block-header">
+        <div class="partner-block-left">
+          <span class="partner-block-num">${idx + 1}</span>
+          <div class="partner-block-info">
+            <span class="partner-block-name">${esc(row.name) || '（業務名未入力）'}</span>
+            <span class="partner-block-sub">${esc(row.customer)}${row.orderer ? '　' + esc(row.orderer) : ''}</span>
+          </div>
+        </div>
+        <div class="partner-block-right">
+          <label class="partner-resp-label">現場責任者</label>
+          <span class="cell-view center ${pg.responsible?'':'empty'} partner-resp-view">${esc(pg.responsible)||'--'}</span>
+          <select class="partner-resp-sel" data-rowid="${row.id}">${respOpts(pg.responsible)}</select>
+          <button class="partner-add-btn" data-rowid="${row.id}" onclick="addPartnerEntry(${row.id})">＋ 協力会社追加</button>
+        </div>
+      </div>
+      <div class="partner-entries" id="entries-${row.id}">
+        ${pg.entries.length === 0
+          ? `<div class="partner-no-entry">協力会社が未登録です。「＋ 協力会社追加」で追加してください。</div>`
+          : pg.entries.map(e => buildEntryHTML(row.id, e, partnerOpts, pStatusOpts, payOpts)).join('')}
+      </div>
     `;
 
-    tbody.appendChild(tr);
+    wrap.appendChild(block);
 
-    // イベントバインド
-    tr.querySelectorAll('[data-pfield]').forEach(el => {
-      el.addEventListener('change', () => updatePartnerField(row.id, el));
-      el.addEventListener('input',  () => updatePartnerField(row.id, el));
+    // 現場責任者イベント
+    const respSel = block.querySelector('.partner-resp-sel');
+    respSel.addEventListener('change', () => {
+      pg.responsible = respSel.value;
+      const v = block.querySelector('.partner-resp-view');
+      if (v) { v.textContent = respSel.value || '--'; v.classList.toggle('empty', !respSel.value); }
     });
+
+    // エントリーのイベントをバインド
+    block.querySelectorAll('.partner-entry').forEach(bindEntryEvents);
   });
 }
 
-function updatePartnerField(rowId, el) {
-  const row = partnerRows.find(r => r.id === rowId);
-  if (!row) return;
-  row[el.dataset.pfield] = el.value;
-  // view spanをリアルタイム更新
-  const td = el.closest('td');
-  const view = td.querySelector('.cell-view');
-  if (!view) return;
-  const f = el.dataset.pfield;
-  if (f === 'estimate' || f === 'billing') {
-    view.textContent = el.value !== '' ? '¥ ' + Number(el.value).toLocaleString() : '--';
-    view.classList.toggle('empty', el.value === '');
-  } else {
-    view.textContent = el.value || '--';
-    view.classList.toggle('empty', !el.value);
-  }
+function buildEntryHTML(rowId, e, partnerOpts, pStatusOpts, payOpts) {
+  return `
+    <div class="partner-entry" data-eid="${e.eid}">
+      <div class="partner-entry-row">
+        <div class="partner-entry-cell" style="flex:1.5">
+          <span class="partner-entry-label">協力会社</span>
+          <span class="cell-view ${e.partner?'':'empty'}">${esc(e.partner)||'--'}</span>
+          <select data-efield="partner" data-rowid="${rowId}" data-eid="${e.eid}">${partnerOpts(e.partner)}</select>
+        </div>
+        <div class="partner-entry-cell" style="flex:1">
+          <span class="partner-entry-label">見積額</span>
+          <span class="cell-view num ${e.estimate!==''?'':'empty'}">${e.estimate!==''?'¥ '+Number(e.estimate).toLocaleString():'--'}</span>
+          <input type="number" data-efield="estimate" data-rowid="${rowId}" data-eid="${e.eid}" value="${e.estimate}" placeholder="0">
+        </div>
+        <div class="partner-entry-cell" style="flex:1">
+          <span class="partner-entry-label">請求額</span>
+          <span class="cell-view num ${e.billing!==''?'':'empty'}">${e.billing!==''?'¥ '+Number(e.billing).toLocaleString():'--'}</span>
+          <input type="number" data-efield="billing" data-rowid="${rowId}" data-eid="${e.eid}" value="${e.billing}" placeholder="0">
+        </div>
+        <div class="partner-entry-cell" style="flex:1.2">
+          <span class="partner-entry-label">契約状況</span>
+          <span class="cell-view center ${e.pStatus?'':'empty'}">${esc(e.pStatus)||'--'}</span>
+          <select data-efield="pStatus" data-rowid="${rowId}" data-eid="${e.eid}">${pStatusOpts(e.pStatus)}</select>
+        </div>
+        <div class="partner-entry-cell" style="flex:0.7">
+          <span class="partner-entry-label">支払月</span>
+          <span class="cell-view center ${e.payMonth?'':'empty'}">${esc(e.payMonth)||'--'}</span>
+          <select data-efield="payMonth" data-rowid="${rowId}" data-eid="${e.eid}">${payOpts(e.payMonth)}</select>
+        </div>
+        <div class="partner-entry-del-wrap">
+          <button class="partner-entry-del" onclick="deletePartnerEntry(${rowId},${e.eid})" title="削除">✕</button>
+        </div>
+      </div>
+    </div>`;
 }
 
-function deletePartnerRow(id) {
-  partnerRows = partnerRows.filter(r => r.id !== id);
+function addPartnerEntry(rowId) {
+  const pg = getOrCreatePartnerGroup(rowId);
+  const e  = makeEmptyEntry();
+  pg.entries.push(e);
+
+  const container = document.getElementById(`entries-${rowId}`);
+  if (!container) return;
+
+  // 未登録メッセージを削除
+  const noEntry = container.querySelector('.partner-no-entry');
+  if (noEntry) noEntry.remove();
+
+  const pOpts = (sel) => ['', ...partners].map(p => `<option value="${esc(p)}" ${p===sel?'selected':''}>${esc(p)||'-- 選択 --'}</option>`).join('');
+  const sOpts = (sel) => ['', ...PARTNER_STATUSES].map(s => `<option value="${s}" ${s===sel?'selected':''}>${s||'-- 選択 --'}</option>`).join('');
+  const mOpts = (sel) => ['', ...MONTHS].map(m => `<option value="${m}" ${m===sel?'selected':''}>${m||'--'}</option>`).join('');
+
+  const div = document.createElement('div');
+  div.innerHTML = buildEntryHTML(rowId, e, pOpts, sOpts, mOpts);
+  const entryEl = div.firstElementChild;
+  container.appendChild(entryEl);
+  bindEntryEvents(entryEl);
+}
+
+function bindEntryEvents(entryEl) {
+  entryEl.querySelectorAll('[data-efield]').forEach(el => {
+    el.addEventListener('change', () => updatePartnerEntry(el));
+    el.addEventListener('input',  () => updatePartnerEntry(el));
+  });
+}
+
+function updatePartnerEntry(el) {
+  const rowId = Number(el.dataset.rowid);
+  const eid   = Number(el.dataset.eid);
+  const field = el.dataset.efield;
+  const pg = partnerRows.find(r => r.rowId === rowId);
+  if (!pg) return;
+  const e = pg.entries.find(e => e.eid === eid);
+  if (!e) return;
+  e[field] = el.value;
+  // viewリアルタイム更新
+  const cell = el.closest('.partner-entry-cell');
+  if (!cell) return;
+  const view = cell.querySelector('.cell-view');
+  if (!view) return;
+  if (field === 'estimate' || field === 'billing') {
+    view.textContent = el.value !== '' ? '¥ ' + Number(el.value).toLocaleString() : '--';
+  } else {
+    view.textContent = el.value || '--';
+  }
+  view.classList.toggle('empty', !el.value && el.value !== 0);
+}
+
+function deletePartnerEntry(rowId, eid) {
+  const pg = partnerRows.find(r => r.rowId === rowId);
+  if (!pg) return;
+  if (!confirm('この協力会社を削除しますか？')) return;
+  pg.entries = pg.entries.filter(e => e.eid !== eid);
   renderPartnerPanel();
 }
+
+// updatePartnerFieldは互換性のため残す
+function updatePartnerField(rowId, el) { updatePartnerEntry(el); }
 
 function statusBadgeHtml(status) {
   if (!status) return `<span style="color:var(--text-muted)">--</span>`;
@@ -2151,8 +2311,8 @@ function addRow() {
   if (!isEditMode) return;
   const r = makeEmptyRow();
   rows.push(r);
-  // 協力会社管理に対応行を自動追加
-  partnerRows.push(makeEmptyPartnerRow(r.id));
+  // 協力会社管理に対応グループを自動追加
+  getOrCreatePartnerGroup(r.id);
   document.getElementById('noData').style.display = 'none';
   const tbody = document.getElementById('tableBody');
   const tr = document.createElement('tr');
@@ -2167,7 +2327,7 @@ function addRow() {
 function deleteRow(rowId) {
   if (!confirm('この行を削除しますか？\n協力会社管理の対応行も削除されます。')) return;
   rows = rows.filter(r => r.id !== rowId);
-  partnerRows = partnerRows.filter(r => r.id !== rowId);
+  partnerRows = partnerRows.filter(r => r.rowId !== rowId);
   renderAll();
   showToast('削除しました');
 }
