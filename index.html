@@ -582,10 +582,11 @@
     align-items: center; gap: 8px;
   }
   .partner-entry-cell {
-    display: flex; flex-direction: column; gap: 2px; min-width: 0;
+    display: flex; flex-direction: column; gap: 2px; min-width: 0; align-items: flex-end;
   }
+  .partner-entry-cell:first-child { align-items: flex-start; }
   .partner-entry-label {
-    font-size: 9px; color: var(--text-muted); white-space: nowrap;
+    font-size: 9px; color: var(--text-muted); white-space: nowrap; text-align: right;
   }
   .partner-entry-cell .cell-view {
     font-size: 12px; padding: 2px 0; color: var(--text);
