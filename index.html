@@ -1920,7 +1920,7 @@ function renderPartnerPanel() {
       </div>
       <div class="partner-entries" id="entries-${row.id}">
         ${pg.entries.length === 0
-          ? `<div class="partner-no-entry">協力会社が未登録です。「＋ 協力会社追加」で追加してください。</div>`
+          ? `<div class="partner-no-entry">協力会社への依頼が発生する場合は「＋ 協力会社追加」で追加</div>`
           : pg.entries.map(e => buildEntryHTML(row.id, e, partnerOpts, pStatusOpts, payOpts)).join('')}
       </div>
     `;
