@@ -95,9 +95,14 @@
     body { background: #fff !important; }
     .tab-panel.active { display: block !important; }
     .panel-scroll { height: auto !important; overflow: visible !important; }
-    .table-container { box-shadow: none !important; border: 1px solid #ccc !important; }
-    thead th { background: #f0f0f0 !important; color: #000 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-    tbody tr { break-inside: avoid; }
+    .table-container { box-shadow: none !important; border: 2px solid #333 !important; }
+    thead th {
+      background: #e0e0e0 !important; color: #000 !important;
+      border: 1px solid #555 !important;
+      -webkit-print-color-adjust: exact; print-color-adjust: exact;
+    }
+    tbody td { border: 1px solid #555 !important; }
+    tbody tr { border-bottom: 1px solid #555 !important; break-inside: avoid; }
     .btn-del, .drag-handle, .tab-bar-actions { display: none !important; }
   }
   .btn-danger:not(:disabled):hover  { background: #fef2f2; border-color: var(--danger); }
