@@ -1134,13 +1134,16 @@ async function loadFromSupabase() {
   if (!USE_SUPABASE) return false;
   try {
     // 行データ
-    const rowsData = await sbFetch('gyomu_rows?select=year,row_data&order=year');
+    const rowsData = await sbFetch('gyomu_rows?select=year,row_data,sort_order&order=year,sort_order');
     if (rowsData && rowsData.length > 0) {
       // 年度リストを構築
       const yrs = [...new Set(rowsData.map(r => r.year))].sort();
       localStorage.setItem(YEARS_KEY, JSON.stringify(yrs));
       yrs.forEach(yr => {
-        const yrows = rowsData.filter(r => r.year === yr).map(r => r.row_data);
+        const yrows = rowsData
+          .filter(r => r.year === yr)
+          .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
+          .map(r => r.row_data);
         localStorage.setItem(`flexdesign_rows_${yr}`, JSON.stringify(yrows));
       });
     }
@@ -1167,7 +1170,7 @@ async function saveToSupabase() {
     // まず既存データを削除してから挿入（upsert）
     await sbFetch(`gyomu_rows?year=eq.${activeYear}`, { method: 'DELETE' });
     if (rows.length > 0) {
-      const inserts = rows.map(r => ({ year: activeYear, row_data: r }));
+      const inserts = rows.map((r, idx) => ({ year: activeYear, row_data: r, sort_order: idx }));
       await sbFetch('gyomu_rows', {
         method: 'POST',
         body: JSON.stringify(inserts)
@@ -2152,8 +2155,11 @@ function bindRowEvents(tr, rowId) {
     if (srcIdx < 0 || destIdx < 0) return;
     const [moved] = rows.splice(srcIdx, 1);
     rows.splice(destIdx, 0, moved);
-    saveCurrentYear(); // 順序を即時保存
+    // ローカル＋Supabase両方に即時保存
+    saveCurrentYear();
+    if (USE_SUPABASE) saveToSupabase();
     renderAll();
+    showToast('並び順を保存しました');
   });
 }
 
