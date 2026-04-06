@@ -844,6 +844,49 @@
   .ks-val   { font-size: 14px; font-weight: 700; color: var(--text); }
   .ks-cnt   { font-size: 10px; color: var(--text-muted); }
 
+  /* メモセル */
+  .memo-cell {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 26px; height: 26px; border-radius: 4px;
+    font-size: 13px; cursor: pointer;
+    color: var(--text-muted); background: transparent;
+    transition: all 0.15s;
+  }
+  .memo-cell:hover { background: var(--row-hover); color: var(--accent); }
+  .memo-cell.has-memo { color: #f59e0b; }
+  .memo-cell.has-memo:hover { background: #fef9ee; }
+
+  /* メモポップアップ */
+  .memo-overlay {
+    display: none; position: fixed; inset: 0; z-index: 1100;
+    background: rgba(0,0,0,0.15);
+  }
+  .memo-popup {
+    position: fixed; z-index: 1200;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+    width: 320px; overflow: hidden;
+  }
+  .memo-popup-inner { display: flex; flex-direction: column; }
+  .memo-popup-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 16px 10px; border-bottom: 1px solid var(--border2);
+  }
+  .memo-popup-title { font-size: 13px; font-weight: 500; color: var(--text); }
+  .memo-textarea {
+    display: block !important; margin: 12px 16px;
+    padding: 8px 10px; font-size: 12px;
+    font-family: 'Noto Sans JP', sans-serif;
+    border: 1px solid var(--border); border-radius: 6px;
+    resize: vertical; outline: none; color: var(--text);
+    background: var(--surface2); line-height: 1.6; min-height: 100px;
+    width: calc(100% - 32px);
+  }
+  .memo-textarea:focus { border-color: var(--accent2); box-shadow: 0 0 0 2px rgba(37,99,235,0.1); }
+  .memo-popup-actions {
+    display: flex; justify-content: flex-end; gap: 8px; padding: 0 16px 14px;
+  }
+
   ::-webkit-scrollbar { width: 6px; height: 6px; }
   ::-webkit-scrollbar-track { background: var(--bg2); }
   ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
@@ -961,6 +1004,7 @@
             <th rowspan="2" style="width:80px">窓口</th>
             <th rowspan="2" style="width:96px">元請受注額<br><small>(円)</small></th>
             <th rowspan="2" style="width:68px">割合<br><small>(%)</small></th>
+            <th rowspan="2" style="width:44px">メモ</th>
           </tr>
           <tr>
         </thead>
@@ -1074,6 +1118,22 @@
     </div>
   </div>
 </div>
+
+<!-- メモポップアップ -->
+<div id="memoPopup" class="memo-popup" style="display:none">
+  <div class="memo-popup-inner">
+    <div class="memo-popup-header">
+      <span class="memo-popup-title">📝 メモ</span>
+      <button class="list-modal-close" onclick="closeMemoPopup()">✕</button>
+    </div>
+    <textarea id="memoTextarea" class="memo-textarea" placeholder="メモを入力..." rows="5"></textarea>
+    <div class="memo-popup-actions">
+      <button class="btn btn-ghost" onclick="closeMemoPopup()">閉じる</button>
+      <button class="btn btn-primary" onclick="saveMemo()">保存</button>
+    </div>
+  </div>
+</div>
+<div id="memoOverlay" class="memo-overlay" onclick="closeMemoPopup()"></div>
 
 <!-- Modal -->
 <div class="modal-overlay" id="modalOverlay">
@@ -1537,7 +1597,7 @@ function makeEmptyRow() {
     mid1month:'', mid1amount:'',
     mid2month:'', mid2amount:'',
     finalmonth:'',
-    qty:'', staff:'', koushu:'', motouke:'',
+    qty:'', staff:'', koushu:'', motouke:'', memo:'',
     prog_survey:0, prog_matome:0, prog_inspect:0, prog_damage:0, prog_report:0
   };
 }
@@ -1697,6 +1757,14 @@ function buildRowHTML(row, num) {
     </td>
     <td style="text-align:center">
       <span class="cell-view" data-ratio-view="${row.id}">${calcRatio(settlement, row.motouke)}</span>
+    </td>
+    <td style="text-align:center">
+      <span class="memo-cell ${row.memo ? 'has-memo' : ''}"
+        data-rowid="${row.id}"
+        title="${esc(row.memo)}"
+        onclick="openMemoPopup(${row.id}, event)">
+        ${row.memo ? '📝' : '＋'}
+      </span>
     </td>
   `;
 }
@@ -2811,6 +2879,67 @@ function forceMigrate() {
   showToast('✅ データ移行を実行しました。再読み込みします...');
   setTimeout(() => location.reload(), 1500);
 }
+
+// ===== メモポップアップ =====
+let memoTargetRowId = null;
+
+function openMemoPopup(rowId, event) {
+  memoTargetRowId = rowId;
+  const row = rows.find(r => r.id === rowId);
+  if (!row) return;
+
+  const popup  = document.getElementById('memoPopup');
+  const overlay = document.getElementById('memoOverlay');
+  const textarea = document.getElementById('memoTextarea');
+  textarea.value = row.memo || '';
+
+  // クリック位置の近くにポップアップを表示
+  const rect = event.target.getBoundingClientRect();
+  const popupW = 320, popupH = 230;
+  let top  = rect.bottom + 6;
+  let left = rect.left - popupW + rect.width;
+  if (top + popupH > window.innerHeight) top = rect.top - popupH - 6;
+  if (left < 8) left = 8;
+  if (left + popupW > window.innerWidth) left = window.innerWidth - popupW - 8;
+
+  popup.style.top  = top  + 'px';
+  popup.style.left = left + 'px';
+  popup.style.display = 'block';
+  overlay.style.display = 'block';
+  setTimeout(() => textarea.focus(), 50);
+}
+
+function closeMemoPopup() {
+  document.getElementById('memoPopup').style.display = 'none';
+  document.getElementById('memoOverlay').style.display = 'none';
+  memoTargetRowId = null;
+}
+
+function saveMemo() {
+  if (memoTargetRowId === null) return;
+  const row = rows.find(r => r.id === memoTargetRowId);
+  if (!row) return;
+  row.memo = document.getElementById('memoTextarea').value;
+
+  // セルの表示を更新
+  const cell = document.querySelector(`.memo-cell[data-rowid="${memoTargetRowId}"]`);
+  if (cell) {
+    cell.textContent  = row.memo ? '📝' : '＋';
+    cell.title        = row.memo;
+    cell.classList.toggle('has-memo', !!row.memo);
+  }
+
+  saveCurrentYear();
+  closeMemoPopup();
+  showToast('メモを保存しました');
+}
+
+// Escキーで閉じる
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && document.getElementById('memoPopup').style.display === 'block') {
+    closeMemoPopup();
+  }
+});
 
 function printPanel() {
   window.print();
