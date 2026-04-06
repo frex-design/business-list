@@ -942,6 +942,8 @@
             <th rowspan="2" style="width:44px">工種</th>
             <th rowspan="2" style="width:68px">数量</th>
             <th rowspan="2" style="width:80px">窓口</th>
+            <th rowspan="2" style="width:96px">元請受注額<br><small>(円)</small></th>
+            <th rowspan="2" style="width:68px">割合<br><small>(%)</small></th>
           </tr>
           <tr>
         </thead>
@@ -1479,7 +1481,7 @@ function makeEmptyRow() {
     mid1month:'', mid1amount:'',
     mid2month:'', mid2amount:'',
     finalmonth:'',
-    qty:'', staff:'', koushu:'',
+    qty:'', staff:'', koushu:'', motouke:'',
     prog_survey:0, prog_matome:0, prog_inspect:0, prog_damage:0, prog_report:0
   };
 }
@@ -1632,6 +1634,13 @@ function buildRowHTML(row, num) {
     <td>
       <span class="cell-view center ${row.staff?'':'empty'}">${esc(row.staff)||'--'}</span>
       <select data-field="staff">${buildStaffOptions(row.staff)}</select>
+    </td>
+    <td>
+      <span class="cell-view num ${row.motouke!==''?'':'empty'}">${row.motouke!==''?fmtYen(row.motouke):'--'}</span>
+      <input type="number" data-field="motouke" value="${row.motouke}">
+    </td>
+    <td style="text-align:center">
+      <span class="cell-view" data-ratio-view="${row.id}">${calcRatio(settlement, row.motouke)}</span>
     </td>
   `;
 }
@@ -2090,6 +2099,13 @@ function buildStaffOptions(selected) {
 function statusCls(s) { return s ? 's-' + s : ''; }
 function esc(s) { return String(s??'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
 function toNum(v) { return (v===''||v===null||v===undefined) ? 0 : Number(v)||0; }
+function calcRatio(settle, motouke) {
+  const s = Number(settle);
+  const m = Number(motouke);
+  if (!m || !s) return '--';
+  return (s / m * 100).toFixed(1) + '%';
+}
+
 function calcSettlement(r) { return toNum(r.original) + toNum(r.addition) - toNum(r.deduction); }
 function calcFinal(r, s) {
   const settle = s !== undefined ? s : calcSettlement(r);
@@ -2145,6 +2161,10 @@ function updateField(rowId, el, tr) {
   const hasData = row.original !== '';
   const sView   = tr.querySelector(`[data-settle-view="${rowId}"]`);
   if (sView) sView.textContent = hasData ? fmtNum(settle) : '--';
+
+  // 割合セルをリアルタイム更新
+  const ratioView = tr.querySelector('[data-ratio-view]');
+  if (ratioView) ratioView.textContent = calcRatio(settle, row.motouke);
 
   if (field !== 'status') {
     const viewSpan = el.previousElementSibling;
