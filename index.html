@@ -2152,6 +2152,7 @@ function bindRowEvents(tr, rowId) {
     if (srcIdx < 0 || destIdx < 0) return;
     const [moved] = rows.splice(srcIdx, 1);
     rows.splice(destIdx, 0, moved);
+    saveCurrentYear(); // 順序を即時保存
     renderAll();
   });
 }
