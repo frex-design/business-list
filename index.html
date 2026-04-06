@@ -85,6 +85,21 @@
   .btn-warning:not(:disabled):hover { background: #a87828; transform: translateY(-1px); }
   .btn-edit { background: #2563eb; color: white; border-color: #2563eb; font-weight: 500; }
   .btn-edit:not(:disabled):hover { background: #1d4ed8; }
+  .btn-print { background: #1e293b; color: #ffffff; border-color: #1e293b; font-weight: 500; }
+  .btn-print:hover { background: #0f172a; border-color: #0f172a; }
+
+  @media print {
+    header, .toolbar, .edit-banner, .year-selector,
+    .top-stats-bar, .koushu-summary, .tab-bar,
+    .tab-panel:not(.active) { display: none !important; }
+    body { background: #fff !important; }
+    .tab-panel.active { display: block !important; }
+    .panel-scroll { height: auto !important; overflow: visible !important; }
+    .table-container { box-shadow: none !important; border: 1px solid #ccc !important; }
+    thead th { background: #f0f0f0 !important; color: #000 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    tbody tr { break-inside: avoid; }
+    .btn-del, .drag-handle, .tab-bar-actions { display: none !important; }
+  }
   .btn-danger:not(:disabled):hover  { background: #fef2f2; border-color: var(--danger); }
   .btn-ghost { background: var(--surface2); color: var(--text-mid); border: 1px solid var(--border); }
   .btn-ghost:not(:disabled):hover { background: var(--row-hover); color: var(--accent); border-color: var(--accent); }
@@ -904,6 +919,7 @@
     <button class="btn btn-edit" id="btnEdit" onclick="toggleEditMode()">✏️ 入力 / 編集</button>
     <button class="btn btn-success" id="btnSave" onclick="saveAndViewMode()" disabled>💾 保存</button>
     <button class="btn btn-primary" id="btnAdd" onclick="addRow()" disabled>＋ 新規行追加</button>
+    <button class="btn btn-print" onclick="printPanel()">🖨️ 印刷</button>
   </div>
 </div>
 
@@ -2673,6 +2689,10 @@ function forceMigrate() {
 
   showToast('✅ データ移行を実行しました。再読み込みします...');
   setTimeout(() => location.reload(), 1500);
+}
+
+function printPanel() {
+  window.print();
 }
 
 function showToast(msg, isError=false) {
