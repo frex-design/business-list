@@ -1157,6 +1157,7 @@ async function loadFromSupabase() {
       });
     }
     showToast('☁️ クラウドからデータを読み込みました');
+    localStorage.setItem('flexdesign_last_sync', Date.now().toString());
     return true;
   } catch(e) {
     console.error('Supabase load error:', e);
@@ -1208,6 +1209,16 @@ async function saveToSupabase() {
       method: 'POST',
       body: JSON.stringify({ key: pkey, value: partnerRows })
     });
+    // 業務進捗 更新日（年度別）
+    const updKey = `flexdesign_prog_updated_${activeYear}`;
+    const updVal = localStorage.getItem(updKey) || '';
+    if (updVal) {
+      await sbFetch(`gyomu_meta?key=eq.${updKey}`, { method: 'DELETE' });
+      await sbFetch('gyomu_meta', {
+        method: 'POST',
+        body: JSON.stringify({ key: updKey, value: updVal })
+      });
+    }
   } catch(e) {
     console.error('Supabase save error:', e);
   }
@@ -1266,12 +1277,13 @@ async function init() {
   // v5→v6 データ移行（一度だけ実行）
   migrateFromV5();
 
-  // Supabase設定済みならクラウドから読み込み
+  // Supabase設定済みならクラウドから読み込み（ローカルより優先）
   if (USE_SUPABASE) {
     showToast('☁️ クラウドからデータ読み込み中...');
     await loadFromSupabase();
   }
 
+  // ローカルストレージから読み込み（Supabaseが書き込んだ最新データを使用）
   const sc = localStorage.getItem(CUSTOMERS_KEY);
   const so = localStorage.getItem(ORDERERS_KEY);
   const sp = localStorage.getItem(PARTNERS_KEY);
@@ -1279,7 +1291,7 @@ async function init() {
   orderers  = so ? JSON.parse(so) : [...DEFAULT_ORDERERS];
   partners  = sp ? JSON.parse(sp) : [...DEFAULT_PARTNERS];
 
-  // 年度リスト初期化（2025年度〜現在の会計年度まで）
+  // 年度リスト（Supabaseが書き込んだものを優先）
   const curFY = getCurrentFiscalYear();
   const sy = localStorage.getItem(YEARS_KEY);
   if (sy) {
@@ -1288,10 +1300,13 @@ async function init() {
     years = [];
     for (let y = 2025; y <= curFY; y++) years.push(y);
   }
+
+  // アクティブ年度（ローカルに保存された最後の選択を使用）
   const say = localStorage.getItem(ACTIVE_YEAR_KEY);
   activeYear = say ? Number(say) : curFY;
   if (!years.includes(activeYear)) activeYear = years[years.length - 1];
 
+  // 年度データ読み込み（Supabaseが書き込んだローカルストレージから）
   loadYearData(activeYear);
 
   const now = new Date();
@@ -1868,6 +1883,15 @@ function saveProgUpdated(val) {
   localStorage.setItem(key, val);
   const viewEl = document.getElementById('progUpdatedView');
   if (viewEl) viewEl.textContent = val || '未設定';
+  // Supabaseにも即時同期
+  if (USE_SUPABASE) {
+    sbFetch(`gyomu_meta?key=eq.${key}`, { method: 'DELETE' }).then(() =>
+      sbFetch('gyomu_meta', {
+        method: 'POST',
+        body: JSON.stringify({ key: key, value: val })
+      })
+    );
+  }
 }
 
 // ---- 協力会社管理 キー ----
