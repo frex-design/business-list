@@ -1147,11 +1147,13 @@ async function loadFromSupabase() {
         localStorage.setItem(`flexdesign_rows_${yr}`, JSON.stringify(yrows));
       });
     }
-    // メタデータ（顧客・発注者・目標など）
+    // メタデータ（顧客・発注者・協力会社リスト・目標・協力会社管理データなど）
     const meta = await sbFetch('gyomu_meta?select=key,value');
     if (meta) {
       meta.forEach(m => {
-        localStorage.setItem(m.key, JSON.stringify(m.value));
+        // valueがオブジェクト/配列の場合はJSON文字列化して保存
+        const val = typeof m.value === 'string' ? m.value : JSON.stringify(m.value);
+        localStorage.setItem(m.key, val);
       });
     }
     showToast('☁️ クラウドからデータを読み込みました');
@@ -1166,8 +1168,7 @@ async function loadFromSupabase() {
 async function saveToSupabase() {
   if (!USE_SUPABASE) return;
   try {
-    // 現在の年度の行データを保存
-    // まず既存データを削除してから挿入（upsert）
+    // 業務行データ保存
     await sbFetch(`gyomu_rows?year=eq.${activeYear}`, { method: 'DELETE' });
     if (rows.length > 0) {
       const inserts = rows.map((r, idx) => ({ year: activeYear, row_data: r, sort_order: idx }));
@@ -1176,10 +1177,11 @@ async function saveToSupabase() {
         body: JSON.stringify(inserts)
       });
     }
-    // メタデータ保存
+    // メタデータ保存（顧客・発注者・協力会社リスト・年度）
     const metaItems = [
       { key: CUSTOMERS_KEY, value: customers },
       { key: ORDERERS_KEY,  value: orderers },
+      { key: PARTNERS_KEY,  value: partners },
       { key: YEARS_KEY,     value: years },
     ];
     for (const item of metaItems) {
@@ -1199,6 +1201,13 @@ async function saveToSupabase() {
         body: JSON.stringify({ key: gkey, value: goalVal })
       });
     }
+    // 協力会社管理データ（年度別）
+    const pkey = partnerRowKey(activeYear);
+    await sbFetch(`gyomu_meta?key=eq.${encodeURIComponent(pkey)}`, { method: 'DELETE' });
+    await sbFetch('gyomu_meta', {
+      method: 'POST',
+      body: JSON.stringify({ key: pkey, value: partnerRows })
+    });
   } catch(e) {
     console.error('Supabase save error:', e);
   }
