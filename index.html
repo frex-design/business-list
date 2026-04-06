@@ -622,7 +622,19 @@
   body.edit-mode .partner-entry-cell select,
   body.edit-mode .partner-entry-cell input[type="number"] { display: block !important; }
 
-  .partner-entry-del-wrap { flex-shrink: 0; }
+  .partner-totals {
+    display: flex; align-items: center; gap: 16px;
+    padding: 6px 12px 8px;
+    border-top: 1px solid var(--border2);
+    background: #f0f7ff;
+  }
+  .partner-totals-label {
+    font-size: 10px; font-weight: 600; color: var(--text-muted);
+    margin-right: 4px;
+  }
+  .partner-totals-item { display: flex; align-items: center; gap: 6px; }
+  .partner-totals-name { font-size: 10px; color: var(--text-muted); }
+  .partner-totals-val  { font-size: 13px; font-weight: 600; color: #2563eb; }
   .partner-entry-del {
     display: none;
     background: none; border: none; cursor: pointer;
@@ -1989,6 +2001,7 @@ function renderPartnerPanel() {
           ? `<div class="partner-no-entry">協力会社への依頼が発生する場合は「＋ 協力会社追加」で追加</div>`
           : pg.entries.map(e => buildEntryHTML(row.id, e, partnerOpts, pStatusOpts, payOpts)).join('')}
       </div>
+      ${pg.entries.length > 0 ? buildPartnerTotalsHTML(row.id, pg) : ''}
     `;
 
     wrap.appendChild(block);
@@ -2004,6 +2017,35 @@ function renderPartnerPanel() {
     // エントリーのイベントをバインド
     block.querySelectorAll('.partner-entry').forEach(bindEntryEvents);
   });
+}
+
+function buildPartnerTotalsHTML(rowId, pg) {
+  const sumEst = pg.entries.reduce((s, e) => s + (Number(e.estimate) || 0), 0);
+  const sumBil = pg.entries.reduce((s, e) => s + (Number(e.billing)  || 0), 0);
+  return `
+    <div class="partner-totals" id="totals-${rowId}">
+      <span class="partner-totals-label">合計</span>
+      <span class="partner-totals-item">
+        <span class="partner-totals-name">見積額</span>
+        <span class="partner-totals-val" id="tot-est-${rowId}">¥${sumEst.toLocaleString()}</span>
+      </span>
+      <span class="partner-totals-item">
+        <span class="partner-totals-name">請求額</span>
+        <span class="partner-totals-val" id="tot-bil-${rowId}">¥${sumBil.toLocaleString()}</span>
+      </span>
+    </div>`;
+}
+
+// 合計バーをリアルタイム更新
+function updatePartnerTotals(rowId) {
+  const pg = partnerRows.find(r => r.rowId === rowId);
+  if (!pg) return;
+  const sumEst = pg.entries.reduce((s, e) => s + (Number(e.estimate) || 0), 0);
+  const sumBil = pg.entries.reduce((s, e) => s + (Number(e.billing)  || 0), 0);
+  const estEl = document.getElementById(`tot-est-${rowId}`);
+  const bilEl = document.getElementById(`tot-bil-${rowId}`);
+  if (estEl) estEl.textContent = '¥' + sumEst.toLocaleString();
+  if (bilEl) bilEl.textContent = '¥' + sumBil.toLocaleString();
 }
 
 function buildEntryHTML(rowId, e, partnerOpts, pStatusOpts, payOpts) {
@@ -2092,6 +2134,8 @@ function updatePartnerEntry(el) {
     view.textContent = el.value || '--';
   }
   view.classList.toggle('empty', !el.value && el.value !== 0);
+  // 見積額・請求額が変わったら合計を更新
+  if (field === 'estimate' || field === 'billing') updatePartnerTotals(rowId);
 }
 
 function deletePartnerEntry(rowId, eid) {
