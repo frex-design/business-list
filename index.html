@@ -534,7 +534,11 @@
   .toast.error { border-color: var(--danger); color: var(--danger); }
 
   /* ===== 業務進捗パネル ===== */
-  .t-partner .tab-dot { background: #0891b2; }
+  .t-profit .tab-dot { background: #059669; }
+  .tab-btn.t-profit.active { background: #059669; border-color: #059669; color: white; }
+  .table-container.profit-tbl { min-width: 900px; }
+  .profit-positive { color: #059669; font-weight: 600; }
+  .profit-negative { color: #dc2626; font-weight: 600; }
   .tab-btn.t-partner.active { background: #0891b2; border-color: #0891b2; color: white; }
 
   .partner-body { display: flex; flex-direction: column; gap: 10px; max-width: 900px; }
@@ -984,6 +988,9 @@
   <button class="tab-btn t-pay" onclick="switchTab('pay')">
     <span class="tab-dot"></span>支払管理（中間①・中間②・最終）
   </button>
+  <button class="tab-btn t-profit" onclick="switchTab('profit')">
+    <span class="tab-dot"></span>概算粗利
+  </button>
   <button class="tab-btn t-prog" onclick="switchTab('prog')">
     <span class="tab-dot"></span>業務進捗
   </button>
@@ -1086,6 +1093,33 @@
       <div class="pay-total-item final-total">
         <span class="pay-total-label">最終支払 合計</span>
         <span class="pay-total-val" id="payTotalFinal">¥0</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== PANEL: 概算粗利 ===== -->
+<div class="tab-panel" id="panel-profit">
+  <div class="panel-scroll">
+    <div class="table-container profit-tbl">
+      <table id="profitTable">
+        <thead>
+          <tr>
+            <th style="width:36px">#</th>
+            <th style="width:100px">顧客</th>
+            <th>業務名</th>
+            <th style="width:110px">精算（円）</th>
+            <th style="width:110px">外注加工費（円）</th>
+            <th style="width:110px">旅費交通費（円）</th>
+            <th style="width:90px">人工</th>
+            <th style="width:110px">概算粗利（円）</th>
+            <th style="width:80px">粗利率</th>
+          </tr>
+        </thead>
+        <tbody id="profitBody"></tbody>
+      </table>
+      <div id="noDataProfit" class="no-data" style="display:none;">
+        <span>💹</span>業務一覧に業務を追加すると表示されます。
       </div>
     </div>
   </div>
@@ -1612,6 +1646,7 @@ function makeEmptyRow() {
     mid2month:'', mid2amount:'',
     finalmonth:'',
     qty:'', staff:'', koushu:'', motouke:'', memo:'',
+    travel:'', manpower:'',
     prog_survey:0, prog_matome:0, prog_inspect:0, prog_damage:0, prog_report:0
   };
 }
@@ -1627,6 +1662,7 @@ function switchTab(tab) {
   if (tab === 'pay')     renderPayPanel();
   if (tab === 'prog')    renderProgPanel();
   if (tab === 'partner') renderPartnerPanel();
+  if (tab === 'profit')  renderProfitPanel();
 }
 
 // ---- EDIT MODE ----
@@ -1696,6 +1732,7 @@ function renderAll() {
   if (currentTab === 'pay')     renderPayPanel();
   if (currentTab === 'prog')    renderProgPanel();
   if (currentTab === 'partner') renderPartnerPanel();
+  if (currentTab === 'profit')  renderProfitPanel();
   updateSummary();
 }
 
@@ -1784,6 +1821,106 @@ function buildRowHTML(row, num) {
 }
 
 // ---- RENDER PAY PANEL（1テーブル横並び・編集対応） ----
+// ---- 概算粗利パネル ----
+function renderProfitPanel() {
+  const tbody  = document.getElementById('profitBody');
+  const noData = document.getElementById('noDataProfit');
+  if (!tbody) return;
+  tbody.innerHTML = '';
+
+  const activeRows = rows.filter(r => r.customer || r.name);
+  if (activeRows.length === 0) {
+    noData.style.display = 'block'; return;
+  }
+  noData.style.display = 'none';
+
+  let totalSettle = 0, totalOuter = 0, totalTravel = 0, totalProfit = 0;
+
+  activeRows.forEach((row, idx) => {
+    const settle = calcSettlement(row);
+
+    // 外注加工費：協力会社管理から取得（請求額優先、なければ見積額）
+    const pg = partnerRows.find(r => r.rowId === row.id);
+    const outer = pg ? pg.entries.reduce((s, e) => {
+      const v = (e.billing !== '' && e.billing != null) ? Number(e.billing) : Number(e.estimate) || 0;
+      return s + v;
+    }, 0) : 0;
+
+    const travel   = Number(row.travel)    || 0;
+    const manpower = Number(row.manpower)  || 0;
+    const profit   = settle - outer - travel;
+    const rate     = settle > 0 ? (profit / settle * 100) : null;
+
+    totalSettle += settle;
+    totalOuter  += outer;
+    totalTravel += travel;
+    totalProfit += profit;
+
+    const profitCls = profit >= 0 ? 'profit-positive' : 'profit-negative';
+    const rateTxt   = rate !== null ? rate.toFixed(1) + '%' : '--';
+    const rateCls   = rate !== null ? (rate >= 0 ? 'profit-positive' : 'profit-negative') : '';
+
+    const tr = document.createElement('tr');
+    tr.dataset.profitid = row.id;
+    tr.innerHTML = `
+      <td class="row-num" style="text-align:center;color:var(--text-muted);font-size:11px">${idx+1}</td>
+      <td style="font-size:12px">${esc(row.customer)||'--'}</td>
+      <td style="font-size:12px">${esc(row.name)||'--'}</td>
+      <td style="text-align:right;font-size:12px">${settle ? fmtYen(settle) : '--'}</td>
+      <td style="text-align:right;font-size:12px;color:#0891b2">${outer ? fmtYen(outer) : '--'}
+        <span class="outer-source" id="outer-src-${row.id}" style="font-size:9px;color:var(--text-muted);display:block"></span>
+      </td>
+      <td style="text-align:right">
+        <span class="cell-view num ${row.travel!==''?'':'empty'}">${row.travel!==''?fmtYen(row.travel):'--'}</span>
+        <input type="number" data-field="travel" value="${row.travel||''}" placeholder="0">
+      </td>
+      <td style="text-align:center">
+        <span class="cell-view ${row.manpower!==''?'':'empty'}">${row.manpower!==''?row.manpower+'人':'--'}</span>
+        <input type="number" data-field="manpower" value="${row.manpower||''}" placeholder="0">
+      </td>
+      <td style="text-align:right"><span class="${profitCls}">${fmtYen(profit)}</span></td>
+      <td style="text-align:center"><span class="${rateCls}">${rateTxt}</span></td>
+    `;
+    tbody.appendChild(tr);
+
+    // 外注ソース表示（請求額or見積額）
+    if (pg && pg.entries.length > 0) {
+      const srcEl = document.getElementById(`outer-src-${row.id}`);
+      if (srcEl) {
+        const hasBilling = pg.entries.some(e => e.billing !== '' && e.billing != null);
+        srcEl.textContent = hasBilling ? '請求額より' : '見積額より';
+      }
+    }
+
+    // 旅費・人工の編集イベント
+    tr.querySelectorAll('[data-field]').forEach(el => {
+      el.addEventListener('change', () => {
+        row[el.dataset.field] = el.value === '' ? '' : Number(el.value);
+        saveCurrentYear();
+        renderProfitPanel();
+      });
+      el.addEventListener('input', () => {
+        row[el.dataset.field] = el.value === '' ? '' : Number(el.value);
+      });
+    });
+  });
+
+  // 合計行
+  const totalRate = totalSettle > 0 ? (totalProfit / totalSettle * 100) : null;
+  const tftr = document.createElement('tr');
+  tftr.style.cssText = 'background:#f0f7ff;font-weight:600;border-top:2px solid var(--border)';
+  tftr.innerHTML = `
+    <td colspan="3" style="text-align:right;font-size:12px;padding:8px">合計</td>
+    <td style="text-align:right;font-size:12px">${fmtYen(totalSettle)}</td>
+    <td style="text-align:right;font-size:12px;color:#0891b2">${fmtYen(totalOuter)}</td>
+    <td style="text-align:right;font-size:12px">${fmtYen(totalTravel)}</td>
+    <td></td>
+    <td style="text-align:right"><span class="${totalProfit>=0?'profit-positive':'profit-negative'}">${fmtYen(totalProfit)}</span></td>
+    <td style="text-align:center"><span class="${totalProfit>=0?'profit-positive':'profit-negative'}">${totalRate!==null?totalRate.toFixed(1)+'%':'--'}</span></td>
+  `;
+  tbody.appendChild(tftr);
+}
+
 function renderPayPanel() {
   const tbody  = document.getElementById('payBody');
   const noData = document.getElementById('noDataPay');
