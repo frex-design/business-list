@@ -851,10 +851,25 @@
     font-size: 13px; cursor: pointer;
     color: var(--text-muted); background: transparent;
     transition: all 0.15s;
+    position: relative;
   }
   .memo-cell:hover { background: var(--row-hover); color: var(--accent); }
   .memo-cell.has-memo { color: #f59e0b; }
   .memo-cell.has-memo:hover { background: #fef9ee; }
+  /* カスタムtooltip（即時表示） */
+  .memo-cell::after {
+    content: attr(data-memo);
+    position: absolute; bottom: calc(100% + 6px); left: 50%;
+    transform: translateX(-50%);
+    background: #1e293b; color: #fff;
+    font-size: 11px; line-height: 1.5;
+    padding: 5px 9px; border-radius: 6px;
+    white-space: pre-wrap; max-width: 220px; min-width: 60px;
+    pointer-events: none; z-index: 500;
+    opacity: 0; transition: opacity 0.05s;
+    text-align: left;
+  }
+  .memo-cell.has-memo:hover::after { opacity: 1; }
 
   /* メモポップアップ */
   .memo-overlay {
@@ -1761,7 +1776,7 @@ function buildRowHTML(row, num) {
     <td style="text-align:center">
       <span class="memo-cell ${row.memo ? 'has-memo' : ''}"
         data-rowid="${row.id}"
-        title="${esc(row.memo)}"
+        data-memo="${esc(row.memo)}"
         onclick="openMemoPopup(${row.id}, event)">
         ${row.memo ? '📝' : '＋'}
       </span>
@@ -2924,8 +2939,8 @@ function saveMemo() {
   // セルの表示を更新
   const cell = document.querySelector(`.memo-cell[data-rowid="${memoTargetRowId}"]`);
   if (cell) {
-    cell.textContent  = row.memo ? '📝' : '＋';
-    cell.title        = row.memo;
+    cell.textContent = row.memo ? '📝' : '＋';
+    cell.dataset.memo = row.memo || '';
     cell.classList.toggle('has-memo', !!row.memo);
   }
 
