@@ -856,20 +856,17 @@
   .memo-cell:hover { background: var(--row-hover); color: var(--accent); }
   .memo-cell.has-memo { color: #f59e0b; }
   .memo-cell.has-memo:hover { background: #fef9ee; }
-  /* カスタムtooltip（即時表示） */
-  .memo-cell::after {
-    content: attr(data-memo);
-    position: absolute; bottom: calc(100% + 6px); left: 50%;
-    transform: translateX(-50%);
+  /* カスタムtooltip（即時表示・JS制御） */
+  #memoTooltip {
+    position: fixed; z-index: 9999;
     background: #1e293b; color: #fff;
-    font-size: 11px; line-height: 1.5;
-    padding: 5px 9px; border-radius: 6px;
-    white-space: pre-wrap; max-width: 220px; min-width: 60px;
-    pointer-events: none; z-index: 500;
-    opacity: 0; transition: opacity 0.05s;
-    text-align: left;
+    font-size: 11px; line-height: 1.6;
+    padding: 6px 10px; border-radius: 6px;
+    white-space: pre-wrap; max-width: 280px;
+    pointer-events: none;
+    display: none;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
   }
-  .memo-cell.has-memo:hover::after { opacity: 1; }
 
   /* メモポップアップ */
   .memo-overlay {
@@ -1181,6 +1178,8 @@
     </div>
   </div>
 </div>
+
+<div id="memoTooltip"></div>
 
 <div class="toast" id="toast"></div>
 
@@ -2893,6 +2892,37 @@ function forceMigrate() {
 
   showToast('✅ データ移行を実行しました。再読み込みします...');
   setTimeout(() => location.reload(), 1500);
+}
+
+// ===== メモツールチップ =====
+document.addEventListener('mouseover', e => {
+  const cell = e.target.closest('.memo-cell.has-memo');
+  if (!cell) return;
+  const memo = cell.dataset.memo;
+  if (!memo) return;
+  const tip = document.getElementById('memoTooltip');
+  tip.textContent = memo;
+  tip.style.display = 'block';
+  positionTooltip(tip, e);
+});
+document.addEventListener('mousemove', e => {
+  const tip = document.getElementById('memoTooltip');
+  if (tip.style.display === 'block') positionTooltip(tip, e);
+});
+document.addEventListener('mouseout', e => {
+  if (!e.target.closest('.memo-cell')) {
+    document.getElementById('memoTooltip').style.display = 'none';
+  }
+});
+function positionTooltip(tip, e) {
+  const tw = tip.offsetWidth, th = tip.offsetHeight;
+  const vw = window.innerWidth,  vh = window.innerHeight;
+  let x = e.clientX + 12;
+  let y = e.clientY + 12;
+  if (x + tw > vw - 8) x = e.clientX - tw - 12;
+  if (y + th > vh - 8) y = e.clientY - th - 12;
+  tip.style.left = x + 'px';
+  tip.style.top  = y + 'px';
 }
 
 // ===== メモポップアップ =====
