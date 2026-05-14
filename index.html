@@ -1152,7 +1152,8 @@
             <th style="width:110px">精算（円）</th>
             <th style="width:110px">外注加工費（円）</th>
             <th style="width:110px">旅費交通費（円）</th>
-            <th style="width:90px">人工</th>
+            <th style="width:80px">現場人工</th>
+            <th style="width:80px">内業人工</th>
             <th style="width:110px">人件費（円）</th>
             <th style="width:110px">概算粗利（円）</th>
             <th style="width:80px">粗利率</th>
@@ -1701,7 +1702,7 @@ function makeEmptyRow() {
     mid2month:'', mid2amount:'',
     finalmonth:'',
     qty:'', staff:'', koushu:'', motouke:'', memo:'',
-    travel:'', manpower:'',
+    travel:'', manpower:'', office_manpower:'',
     prog_survey:0, prog_matome:0, prog_inspect:0, prog_damage:0, prog_report:0
   };
 }
@@ -1889,7 +1890,7 @@ function renderProfitPanel() {
   }
   noData.style.display = 'none';
 
-  let totalSettle = 0, totalOuter = 0, totalTravel = 0, totalLabor = 0, totalProfit = 0;
+  let totalSettle = 0, totalOuter = 0, totalTravel = 0, totalFieldMan = 0, totalOfficeMan = 0, totalLabor = 0, totalProfit = 0;
 
   activeRows.forEach((row, idx) => {
     const settle = calcSettlement(row);
@@ -1901,17 +1902,21 @@ function renderProfitPanel() {
       return s + v;
     }, 0) : 0;
 
-    const travel     = Number(row.travel)   || 0;
-    const manpower   = Number(row.manpower) || 0;
-    const laborCost  = manpower * laborUnitPrice;
-    const profit     = settle - outer - travel - laborCost;
-    const rate       = settle > 0 ? (profit / settle * 100) : null;
+    const travel        = Number(row.travel)          || 0;
+    const fieldManpower = Number(row.manpower)        || 0;
+    const officeManpower= Number(row.office_manpower) || 0;
+    const totalManpower = fieldManpower + officeManpower;
+    const laborCost     = totalManpower * laborUnitPrice;
+    const profit        = settle - outer - travel - laborCost;
+    const rate          = settle > 0 ? (profit / settle * 100) : null;
 
-    totalSettle += settle;
-    totalOuter  += outer;
-    totalTravel += travel;
-    totalLabor  += laborCost;
-    totalProfit += profit;
+    totalSettle    += settle;
+    totalOuter     += outer;
+    totalTravel    += travel;
+    totalFieldMan  += fieldManpower;
+    totalOfficeMan += officeManpower;
+    totalLabor     += laborCost;
+    totalProfit    += profit;
 
     const profitCls = profit >= 0 ? 'profit-positive' : 'profit-negative';
     const rateTxt   = rate !== null ? rate.toFixed(1) + '%' : '--';
@@ -1935,8 +1940,12 @@ function renderProfitPanel() {
         <span class="cell-view ${row.manpower!==''?'':'empty'}">${row.manpower!==''?row.manpower+'人工':'--'}</span>
         <input type="number" data-field="manpower" value="${row.manpower||''}" placeholder="0">
       </td>
+      <td style="text-align:center">
+        <span class="cell-view ${row.office_manpower!==''?'':'empty'}">${row.office_manpower!==''?row.office_manpower+'人工':'--'}</span>
+        <input type="number" data-field="office_manpower" value="${row.office_manpower||''}" placeholder="0">
+      </td>
       <td style="text-align:right;font-size:12px;color:#059669">${laborCost ? fmtYen(laborCost) : '--'}
-        ${manpower ? `<span style="font-size:9px;color:var(--text-muted);display:block">${manpower}人工×${fmtYen(laborUnitPrice)}</span>` : ''}
+        ${totalManpower ? `<span style="font-size:9px;color:var(--text-muted);display:block">${totalManpower}人工×${fmtYen(laborUnitPrice)}</span>` : ''}
       </td>
       <td style="text-align:right"><span class="${profitCls}">${fmtYen(profit)}</span></td>
       <td style="text-align:center"><span class="${rateCls}">${rateTxt}</span></td>
@@ -1980,8 +1989,11 @@ function renderProfitPanel() {
     <td style="text-align:right;font-size:12px">${fmtYen(totalSettle)}</td>
     <td style="text-align:right;font-size:12px;color:#0891b2">${fmtYen(totalOuter)}</td>
     <td style="text-align:right;font-size:12px">${fmtYen(totalTravel)}</td>
-    <td></td>
-    <td style="text-align:right;font-size:12px;color:#059669">${fmtYen(totalLabor)}</td>
+    <td style="text-align:center;font-size:12px;color:var(--text-mid)">${totalFieldMan > 0 ? totalFieldMan + '人工' : '--'}</td>
+    <td style="text-align:center;font-size:12px;color:var(--text-mid)">${totalOfficeMan > 0 ? totalOfficeMan + '人工' : '--'}</td>
+    <td style="text-align:right;font-size:12px;color:#059669">${fmtYen(totalLabor)}
+      <span style="font-size:9px;color:var(--text-muted);display:block">${totalFieldMan+totalOfficeMan}人工合計</span>
+    </td>
     <td style="text-align:right"><span class="${totalProfit>=0?'profit-positive':'profit-negative'}">${fmtYen(totalProfit)}</span></td>
     <td style="text-align:center"><span class="${totalProfit>=0?'profit-positive':'profit-negative'}">${totalRate!==null?totalRate.toFixed(1)+'%':'--'}</span></td>
   `;
