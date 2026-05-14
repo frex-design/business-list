@@ -1974,12 +1974,6 @@ function renderProfitPanel() {
     });
   });
 
-  // 人件費合計をカードに反映
-  const laborTotalEl = document.getElementById('laborTotalDisplay');
-  if (laborTotalEl) {
-    laborTotalEl.textContent = totalLabor > 0 ? fmtYen(totalLabor) : '--';
-  }
-
   // 合計行
   const totalRate = totalSettle > 0 ? (totalProfit / totalSettle * 100) : null;
   const tftr = document.createElement('tr');
@@ -2589,6 +2583,18 @@ function updateSummary() {
   document.getElementById('sumSettlement').textContent = '¥' + settle.toLocaleString();
   updateGoalChart(settle);
   updateKoushuSummary();
+  updateLaborTotal();
+}
+
+function updateLaborTotal() {
+  const activeRows = rows.filter(r => r.customer || r.name || (r.original !== '' && r.original !== undefined));
+  const total = activeRows.reduce((s, r) => {
+    const field  = Number(r.manpower)        || 0;
+    const office = Number(r.office_manpower) || 0;
+    return s + (field + office) * laborUnitPrice;
+  }, 0);
+  const el = document.getElementById('laborTotalDisplay');
+  if (el) el.textContent = total > 0 ? fmtYen(total) : '--';
 }
 
 function onGoalInput(el) {
@@ -2626,7 +2632,8 @@ function onLaborInput(el) {
       })
     );
   }
-  // 粗利パネルが開いていれば再描画
+  // カードの合計を即時更新 + 粗利パネルが開いていれば再描画
+  updateLaborTotal();
   if (currentTab === 'profit') renderProfitPanel();
 }
 
