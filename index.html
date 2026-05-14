@@ -538,6 +538,29 @@
   .toast.show { transform: translateY(0); opacity: 1; }
   .toast.error { border-color: var(--danger); color: var(--danger); }
 
+  /* ===== 日当単価カード ===== */
+  .labor-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 4px; padding: 10px 18px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    display: flex; flex-direction: column; gap: 4px;
+    border-bottom: 3px solid #059669;
+    flex-shrink: 0;
+  }
+  .labor-card-label { font-size: 11px; font-weight: 700; color: #059669; letter-spacing: 0.04em; }
+  .labor-card-input-row { display: flex; align-items: center; gap: 4px; }
+  .labor-card input {
+    display: block !important;
+    width: 88px; padding: 5px 7px;
+    border: 1px solid var(--border); border-radius: 2px;
+    font-size: 12px; font-weight: 400; color: var(--text);
+    background: var(--surface2); outline: none; text-align: right;
+    transition: border-color 0.2s;
+  }
+  .labor-card input:focus { border-color: #059669; box-shadow: 0 0 0 3px rgba(5,150,105,0.15); }
+  .labor-card-sub { font-size: 10px; color: var(--text-muted); }
+  .labor-total-val { font-weight: 600; color: #059669; }
+
   /* ===== 業務進捗パネル ===== */
   .t-profit .tab-dot { background: #059669; }
   .tab-btn.t-profit.active { background: #059669; border-color: #059669; color: white; }
@@ -980,6 +1003,17 @@
     </div>
   </div>
 
+  <!-- 日当単価カード -->
+  <div class="labor-card">
+    <div class="labor-card-label">👷 日当単価（社保込）</div>
+    <div class="labor-card-input-row">
+      <span class="goal-prefix">¥</span>
+      <input type="text" id="laborUnitInput" placeholder="18,000" oninput="onLaborInput(this)" inputmode="numeric">
+      <span class="goal-suffix">円/人工</span>
+    </div>
+    <div class="labor-card-sub">人件費合計：<span class="labor-total-val" id="laborTotalDisplay">--</span></div>
+  </div>
+
   <!-- 工種別集計 -->
   <div class="koushu-summary" id="koushuSummary"></div>
 </div>
@@ -1119,6 +1153,7 @@
             <th style="width:110px">外注加工費（円）</th>
             <th style="width:110px">旅費交通費（円）</th>
             <th style="width:90px">人工</th>
+            <th style="width:110px">人件費（円）</th>
             <th style="width:110px">概算粗利（円）</th>
             <th style="width:80px">粗利率</th>
           </tr>
@@ -1232,6 +1267,7 @@ const GOAL_KEY        = 'flexdesign_goal_v6';
 const YEARS_KEY       = 'flexdesign_years_v6';
 const ACTIVE_YEAR_KEY = 'flexdesign_active_year_v6';
 const PARTNERS_KEY    = 'flexdesign_partners_v6';
+const LABOR_UNIT_KEY  = 'flexdesign_labor_unit';
 
 // ===== Supabase設定 =====
 // ★ 以下をご自身のSupabaseプロジェクトの値に変更してください
@@ -1358,6 +1394,14 @@ async function saveToSupabase() {
         body: JSON.stringify({ key: updKey, value: updVal })
       });
     }
+    // 日当単価（全年度共通）
+    if (laborUnitPrice) {
+      await sbFetch(`gyomu_meta?key=eq.${LABOR_UNIT_KEY}`, { method: 'DELETE' });
+      await sbFetch('gyomu_meta', {
+        method: 'POST',
+        body: JSON.stringify({ key: LABOR_UNIT_KEY, value: laborUnitPrice })
+      });
+    }
   } catch(e) {
     console.error('Supabase save error:', e);
   }
@@ -1407,9 +1451,10 @@ let partnerRows = []; // 協力会社管理の行データ（年度別）
 let partnerIdCounter = 1;
 let modalType = '';
 let rowIdCounter = 1;
-let isEditMode = false;
-let currentTab = 'main';
-let dragSrcId  = null;
+let isEditMode     = false;
+let currentTab     = 'main';
+let dragSrcId      = null;
+let laborUnitPrice = 18000;
 
 // ---- INIT ----
 async function init() {
@@ -1429,6 +1474,9 @@ async function init() {
   customers = sc ? JSON.parse(sc) : [...DEFAULT_CUSTOMERS];
   orderers  = so ? JSON.parse(so) : [...DEFAULT_ORDERERS];
   partners  = sp ? JSON.parse(sp) : [...DEFAULT_PARTNERS];
+
+  // 日当単価
+  loadLaborUnit();
 
   // 年度リスト（Supabaseが書き込んだものを優先）
   const curFY = getCurrentFiscalYear();
@@ -1841,7 +1889,7 @@ function renderProfitPanel() {
   }
   noData.style.display = 'none';
 
-  let totalSettle = 0, totalOuter = 0, totalTravel = 0, totalProfit = 0;
+  let totalSettle = 0, totalOuter = 0, totalTravel = 0, totalLabor = 0, totalProfit = 0;
 
   activeRows.forEach((row, idx) => {
     const settle = calcSettlement(row);
@@ -1853,14 +1901,16 @@ function renderProfitPanel() {
       return s + v;
     }, 0) : 0;
 
-    const travel   = Number(row.travel)    || 0;
-    const manpower = Number(row.manpower)  || 0;
-    const profit   = settle - outer - travel;
-    const rate     = settle > 0 ? (profit / settle * 100) : null;
+    const travel     = Number(row.travel)   || 0;
+    const manpower   = Number(row.manpower) || 0;
+    const laborCost  = manpower * laborUnitPrice;
+    const profit     = settle - outer - travel - laborCost;
+    const rate       = settle > 0 ? (profit / settle * 100) : null;
 
     totalSettle += settle;
     totalOuter  += outer;
     totalTravel += travel;
+    totalLabor  += laborCost;
     totalProfit += profit;
 
     const profitCls = profit >= 0 ? 'profit-positive' : 'profit-negative';
@@ -1882,8 +1932,11 @@ function renderProfitPanel() {
         <input type="number" data-field="travel" value="${row.travel||''}" placeholder="0">
       </td>
       <td style="text-align:center">
-        <span class="cell-view ${row.manpower!==''?'':'empty'}">${row.manpower!==''?row.manpower+'人':'--'}</span>
+        <span class="cell-view ${row.manpower!==''?'':'empty'}">${row.manpower!==''?row.manpower+'人工':'--'}</span>
         <input type="number" data-field="manpower" value="${row.manpower||''}" placeholder="0">
+      </td>
+      <td style="text-align:right;font-size:12px;color:#059669">${laborCost ? fmtYen(laborCost) : '--'}
+        ${manpower ? `<span style="font-size:9px;color:var(--text-muted);display:block">${manpower}人工×${fmtYen(laborUnitPrice)}</span>` : ''}
       </td>
       <td style="text-align:right"><span class="${profitCls}">${fmtYen(profit)}</span></td>
       <td style="text-align:center"><span class="${rateCls}">${rateTxt}</span></td>
@@ -1912,6 +1965,12 @@ function renderProfitPanel() {
     });
   });
 
+  // 人件費合計をカードに反映
+  const laborTotalEl = document.getElementById('laborTotalDisplay');
+  if (laborTotalEl) {
+    laborTotalEl.textContent = totalLabor > 0 ? fmtYen(totalLabor) : '--';
+  }
+
   // 合計行
   const totalRate = totalSettle > 0 ? (totalProfit / totalSettle * 100) : null;
   const tftr = document.createElement('tr');
@@ -1922,6 +1981,7 @@ function renderProfitPanel() {
     <td style="text-align:right;font-size:12px;color:#0891b2">${fmtYen(totalOuter)}</td>
     <td style="text-align:right;font-size:12px">${fmtYen(totalTravel)}</td>
     <td></td>
+    <td style="text-align:right;font-size:12px;color:#059669">${fmtYen(totalLabor)}</td>
     <td style="text-align:right"><span class="${totalProfit>=0?'profit-positive':'profit-negative'}">${fmtYen(totalProfit)}</span></td>
     <td style="text-align:center"><span class="${totalProfit>=0?'profit-positive':'profit-negative'}">${totalRate!==null?totalRate.toFixed(1)+'%':'--'}</span></td>
   `;
@@ -2527,6 +2587,35 @@ function onGoalInput(el) {
   const formatted = Number(raw).toLocaleString();
   el.value = formatted;
   updateGoalChart();
+}
+
+// ---- 日当単価 読み込み ----
+function loadLaborUnit() {
+  const v = localStorage.getItem(LABOR_UNIT_KEY);
+  if (v !== null) laborUnitPrice = Number(v) || 18000;
+  const inp = document.getElementById('laborUnitInput');
+  if (inp) inp.value = laborUnitPrice.toLocaleString();
+}
+
+// ---- 日当単価 入力ハンドラー ----
+function onLaborInput(el) {
+  const raw = el.value.replace(/,/g, '').replace(/[^0-9]/g, '');
+  if (raw === '') { el.value = ''; laborUnitPrice = 0; return; }
+  laborUnitPrice = Number(raw) || 0;
+  el.value = laborUnitPrice.toLocaleString();
+  // localStorage に保存
+  localStorage.setItem(LABOR_UNIT_KEY, laborUnitPrice);
+  // Supabase にも即時同期
+  if (USE_SUPABASE) {
+    sbFetch(`gyomu_meta?key=eq.${LABOR_UNIT_KEY}`, { method: 'DELETE' }).then(() =>
+      sbFetch('gyomu_meta', {
+        method: 'POST',
+        body: JSON.stringify({ key: LABOR_UNIT_KEY, value: laborUnitPrice })
+      })
+    );
+  }
+  // 粗利パネルが開いていれば再描画
+  if (currentTab === 'profit') renderProfitPanel();
 }
 
 // 工種ごとの固有カラー（バッジ・カードと連動）
