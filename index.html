@@ -567,6 +567,37 @@
   .table-container.profit-tbl { min-width: 900px; }
   .profit-positive { color: #059669; font-weight: 600; }
   .profit-negative { color: #dc2626; font-weight: 600; }
+
+  /* 粗利率ツールチップ */
+  .rate-tip-wrap {
+    position: relative; display: inline-block;
+    cursor: default;
+  }
+  .rate-tip {
+    display: none;
+    position: absolute;
+    bottom: calc(100% + 7px);
+    right: 0; transform: none;
+    background: #1a1a1a; color: #fff;
+    border-radius: 4px; padding: 8px 14px;
+    font-size: 11px; white-space: nowrap;
+    z-index: 200;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.22);
+    pointer-events: none;
+  }
+  .rate-tip::after {
+    content: ''; position: absolute; top: 100%; right: 12px; left: auto;
+    border: 5px solid transparent;
+    border-top-color: #1a1a1a;
+  }
+  .rate-tip-wrap:hover .rate-tip { display: block; }
+  .rate-tip-row {
+    display: flex; justify-content: space-between;
+    gap: 18px; line-height: 1.8;
+  }
+  .rate-tip-row .tip-label { color: rgba(255,255,255,0.6); }
+  .rate-tip-row .tip-safe   { color: #facc15; font-weight: 700; }
+  .rate-tip-row .tip-target { color: #4ade80; font-weight: 700; }
   .tab-btn.t-partner.active { background: var(--accent); border-color: var(--accent); color: white; }
 
   .partner-body { display: flex; flex-direction: column; gap: 10px; max-width: 900px; }
@@ -667,6 +698,13 @@
   .partner-totals-item { display: flex; align-items: center; gap: 6px; }
   .partner-totals-name { font-size: 10px; color: var(--text-muted); }
   .partner-totals-val  { font-size: 13px; font-weight: 600; color: var(--accent); }
+  .partner-totals-rate {
+    font-size: 11px; font-weight: 600; color: var(--accent2);
+    background: rgba(0,169,224,0.12); border: 1px solid rgba(0,169,224,0.3);
+    border-radius: 2px; padding: 1px 6px; letter-spacing: 0.02em;
+  }
+  .partner-totals-rate.high { color: var(--danger); background: rgba(220,38,38,0.08); border-color: rgba(220,38,38,0.25); }
+  .partner-totals-settle { font-size: 10px; color: var(--text-muted); margin-left: 8px; }
   .partner-entry-del {
     display: none;
     background: none; border: none; cursor: pointer;
@@ -1989,7 +2027,21 @@ function renderProfitPanel() {
       <span style="font-size:9px;color:var(--text-muted);display:block">${totalFieldMan+totalOfficeMan}人工合計</span>
     </td>
     <td style="text-align:right"><span class="${totalProfit>=0?'profit-positive':'profit-negative'}">${fmtYen(totalProfit)}</span></td>
-    <td style="text-align:center"><span class="${totalProfit>=0?'profit-positive':'profit-negative'}">${totalRate!==null?totalRate.toFixed(1)+'%':'--'}</span></td>
+    <td style="text-align:center">
+      <div class="rate-tip-wrap">
+        <span class="${totalProfit>=0?'profit-positive':'profit-negative'}" style="text-decoration:underline dotted;text-underline-offset:3px;cursor:default">${totalRate!==null?totalRate.toFixed(1)+'%':'--'}</span>
+        <div class="rate-tip">
+          <div class="rate-tip-row">
+            <span class="tip-label">安全ライン</span>
+            <span class="tip-safe">33%</span>
+          </div>
+          <div class="rate-tip-row">
+            <span class="tip-label">目標ライン</span>
+            <span class="tip-target">36%</span>
+          </div>
+        </div>
+      </div>
+    </td>
   `;
   tbody.appendChild(tftr);
 }
@@ -2326,17 +2378,30 @@ function renderPartnerPanel() {
 function buildPartnerTotalsHTML(rowId, pg) {
   const sumEst = pg.entries.reduce((s, e) => s + (Number(e.estimate) || 0), 0);
   const sumBil = pg.entries.reduce((s, e) => s + (Number(e.billing)  || 0), 0);
+  const row = rows.find(r => r.id === rowId);
+  const settlement = row ? calcSettlement(row) : 0;
+  const estRate = settlement > 0 ? (sumEst / settlement * 100).toFixed(1) : null;
+  const bilRate = settlement > 0 ? (sumBil / settlement * 100).toFixed(1) : null;
+  const estRateHtml = estRate !== null
+    ? `<span class="partner-totals-rate${Number(estRate) > 100 ? ' high' : ''}" id="rate-est-${rowId}">${estRate}%</span>`
+    : `<span class="partner-totals-rate" id="rate-est-${rowId}">--</span>`;
+  const bilRateHtml = bilRate !== null
+    ? `<span class="partner-totals-rate${Number(bilRate) > 100 ? ' high' : ''}" id="rate-bil-${rowId}">${bilRate}%</span>`
+    : `<span class="partner-totals-rate" id="rate-bil-${rowId}">--</span>`;
   return `
     <div class="partner-totals" id="totals-${rowId}">
       <span class="partner-totals-label">合計</span>
       <span class="partner-totals-item">
         <span class="partner-totals-name">見積額</span>
         <span class="partner-totals-val" id="tot-est-${rowId}">¥${sumEst.toLocaleString()}</span>
+        ${estRateHtml}
       </span>
       <span class="partner-totals-item">
         <span class="partner-totals-name">請求額</span>
         <span class="partner-totals-val" id="tot-bil-${rowId}">¥${sumBil.toLocaleString()}</span>
+        ${bilRateHtml}
       </span>
+      <span class="partner-totals-settle">精算 ¥${settlement.toLocaleString()} 比</span>
     </div>`;
 }
 
@@ -2346,10 +2411,37 @@ function updatePartnerTotals(rowId) {
   if (!pg) return;
   const sumEst = pg.entries.reduce((s, e) => s + (Number(e.estimate) || 0), 0);
   const sumBil = pg.entries.reduce((s, e) => s + (Number(e.billing)  || 0), 0);
-  const estEl = document.getElementById(`tot-est-${rowId}`);
-  const bilEl = document.getElementById(`tot-bil-${rowId}`);
+  const row = rows.find(r => r.id === rowId);
+  const settlement = row ? calcSettlement(row) : 0;
+
+  const estEl     = document.getElementById(`tot-est-${rowId}`);
+  const bilEl     = document.getElementById(`tot-bil-${rowId}`);
+  const estRateEl = document.getElementById(`rate-est-${rowId}`);
+  const bilRateEl = document.getElementById(`rate-bil-${rowId}`);
+
   if (estEl) estEl.textContent = '¥' + sumEst.toLocaleString();
   if (bilEl) bilEl.textContent = '¥' + sumBil.toLocaleString();
+
+  if (estRateEl) {
+    if (settlement > 0) {
+      const r = (sumEst / settlement * 100).toFixed(1);
+      estRateEl.textContent = r + '%';
+      estRateEl.className = 'partner-totals-rate' + (Number(r) > 100 ? ' high' : '');
+    } else {
+      estRateEl.textContent = '--';
+      estRateEl.className = 'partner-totals-rate';
+    }
+  }
+  if (bilRateEl) {
+    if (settlement > 0) {
+      const r = (sumBil / settlement * 100).toFixed(1) ;
+      bilRateEl.textContent = r + '%';
+      bilRateEl.className = 'partner-totals-rate' + (Number(r) > 100 ? ' high' : '');
+    } else {
+      bilRateEl.textContent = '--';
+      bilRateEl.className = 'partner-totals-rate';
+    }
+  }
 }
 
 function buildEntryHTML(rowId, e, partnerOpts, pStatusOpts, payOpts) {
