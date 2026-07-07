@@ -1189,6 +1189,8 @@
             <th>業務名</th>
             <th style="width:110px">精算（円）</th>
             <th style="width:110px">外注加工費（円）</th>
+            <th style="width:110px">宿泊費（円）</th>
+            <th style="width:110px">出張手当（円）</th>
             <th style="width:110px">旅費交通費（円）</th>
             <th style="width:80px">現場人工</th>
             <th style="width:80px">内業人工</th>
@@ -1199,6 +1201,7 @@
         </thead>
         <tbody id="profitBody"></tbody>
       </table>
+      <div id="profitOrphanNote" style="display:none;margin-top:8px;padding:8px 12px;background:#fff7ed;border:1px solid #fed7aa;border-radius:6px;color:#9a3412;font-size:12px;line-height:1.6"></div>
       <div id="noDataProfit" class="no-data" style="display:none;">
         <span>💹</span>業務一覧に業務を追加すると表示されます。
       </div>
@@ -1504,6 +1507,8 @@ async function init() {
   if (USE_SUPABASE) {
     showToast('☁️ クラウドからデータ読み込み中...');
     await loadFromSupabase();
+    // 出張手当・宿泊費は外部システムから非同期で集計（起動をブロックしない）
+    loadTravelExpenseData().then(() => { if (typeof currentTab !== 'undefined' && currentTab === 'profit') renderProfitPanel(); });
   }
 
   // ローカルストレージから読み込み（Supabaseが書き込んだ最新データを使用）
@@ -1915,6 +1920,64 @@ function buildRowHTML(row, num) {
 }
 
 // ---- RENDER PAY PANEL（1テーブル横並び・編集対応） ----
+// ===== 出張手当・宿泊費の外部システム集計（業務名で正規化突合）=====
+// 出張手当管理システム: https://frex-design.github.io/travel-allowance/
+//   → travel_requests（task_name / status）＋ travel_allowance_details（allowance_amount / refunded_total）
+// 出張宿泊管理システム: https://frex-design.github.io/Accommodation-management/
+//   → accommodations（project_name / amount）
+// 3システムとも同一Supabaseプロジェクトを共有しているため anon key でそのまま集計できる（読み取りのみ）
+let travelExpenseData = { loaded: false, lodgingByKey: {}, allowanceByKey: {}, lodgingSrc: {}, allowanceSrc: {} };
+
+// 業務名の表記ゆれ吸収：R8接頭辞・「管内」「業務」「県」「道路」・空白を除去して突合キー化
+function normProjKey(s) {
+  if (!s) return '';
+  return String(s)
+    .replace(/[RＲrｒ][8８]/g, '')
+    .replace(/管内/g, '')
+    .replace(/業務/g, '')
+    .replace(/県/g, '')
+    .replace(/道路/g, '')
+    .replace(/\s+/g, '')
+    .trim();
+}
+
+// 出張手当・宿泊費を業務名キーで集計してキャッシュする
+async function loadTravelExpenseData() {
+  if (!USE_SUPABASE) { travelExpenseData.loaded = true; return; }
+  try {
+    const [accoms, reqs, details] = await Promise.all([
+      sbFetch('accommodations?select=project_name,amount'),
+      sbFetch('travel_requests?select=id,task_name,status'),
+      sbFetch('travel_allowance_details?select=request_id,allowance_amount,refunded_total')
+    ]);
+    // 宿泊費：accommodations.amount を正規化した project_name で合計
+    const lodgingByKey = {}, lodgingSrc = {};
+    (accoms || []).forEach(a => {
+      const k = normProjKey(a.project_name);
+      if (!k) return;
+      lodgingByKey[k] = (lodgingByKey[k] || 0) + (Number(a.amount) || 0);
+      (lodgingSrc[k] = lodgingSrc[k] || new Set()).add(a.project_name);
+    });
+    // 出張手当：details → requests(task_name) を突合し、返還後の実支給額で合計（キャンセルは除外）
+    const reqMap = {};
+    (reqs || []).forEach(r => { if (r.status !== 'cancelled') reqMap[r.id] = r.task_name; });
+    const allowanceByKey = {}, allowanceSrc = {};
+    (details || []).forEach(d => {
+      const tn = reqMap[d.request_id];
+      if (tn == null) return;
+      const k = normProjKey(tn);
+      if (!k) return;
+      const net = (Number(d.allowance_amount) || 0) - (Number(d.refunded_total) || 0);
+      allowanceByKey[k] = (allowanceByKey[k] || 0) + net;
+      (allowanceSrc[k] = allowanceSrc[k] || new Set()).add(tn);
+    });
+    travelExpenseData = { loaded: true, lodgingByKey, allowanceByKey, lodgingSrc, allowanceSrc };
+  } catch (e) {
+    console.warn('出張手当・宿泊費データの読み込みに失敗しました', e);
+    travelExpenseData.loaded = true;
+  }
+}
+
 // ---- 概算粗利パネル ----
 function renderProfitPanel() {
   const tbody  = document.getElementById('profitBody');
@@ -1928,7 +1991,7 @@ function renderProfitPanel() {
   }
   noData.style.display = 'none';
 
-  let totalSettle = 0, totalOuter = 0, totalTravel = 0, totalFieldMan = 0, totalOfficeMan = 0, totalLabor = 0, totalProfit = 0;
+  let totalSettle = 0, totalOuter = 0, totalLodging = 0, totalAllowance = 0, totalTravel = 0, totalFieldMan = 0, totalOfficeMan = 0, totalLabor = 0, totalProfit = 0;
 
   activeRows.forEach((row, idx) => {
     const settle = calcSettlement(row);
@@ -1941,15 +2004,28 @@ function renderProfitPanel() {
     }, 0) : 0;
 
     const travel        = Number(row.travel)          || 0;
+    // 出張手当・宿泊費：業務名を正規化して外部システムの集計値を引き当てる
+    const nkey            = normProjKey(row.name);
+    const lodging         = travelExpenseData.lodgingByKey[nkey]   || 0;
+    const allowance       = travelExpenseData.allowanceByKey[nkey] || 0;
+    const lodgingSrcArr   = travelExpenseData.lodgingSrc[nkey]   ? [...travelExpenseData.lodgingSrc[nkey]]   : [];
+    const allowanceSrcArr = travelExpenseData.allowanceSrc[nkey] ? [...travelExpenseData.allowanceSrc[nkey]] : [];
+    const lodgingFuzzy    = lodgingSrcArr.some(n => n !== row.name);
+    const allowanceFuzzy  = allowanceSrcArr.some(n => n !== row.name);
+    const lodgingTip      = lodgingSrcArr.length   ? '宿泊 元データ: ' + lodgingSrcArr.join(' / ')     : '';
+    const allowanceTip    = allowanceSrcArr.length ? '出張手当 元データ: ' + allowanceSrcArr.join(' / ') : '';
+    const fuzzyMark = ' <span style="color:#9ca3af;font-size:10px;cursor:help" title="業務名と表記が異なる元データを正規化で自動突合しました">≈</span>';
     const fieldManpower = Number(row.manpower)        || 0;
     const officeManpower= Number(row.office_manpower) || 0;
     const totalManpower = fieldManpower + officeManpower;
     const laborCost     = totalManpower * laborUnitPrice;
-    const profit        = settle - outer - travel - laborCost;
+    const profit        = settle - outer - lodging - allowance - travel - laborCost;
     const rate          = settle > 0 ? (profit / settle * 100) : null;
 
     totalSettle    += settle;
     totalOuter     += outer;
+    totalLodging   += lodging;
+    totalAllowance += allowance;
     totalTravel    += travel;
     totalFieldMan  += fieldManpower;
     totalOfficeMan += officeManpower;
@@ -1970,6 +2046,8 @@ function renderProfitPanel() {
       <td style="text-align:right;font-size:12px;color:#0891b2">${outer ? fmtYen(outer) : '--'}
         <span class="outer-source" id="outer-src-${row.id}" style="font-size:9px;color:var(--text-muted);display:block"></span>
       </td>
+      <td style="text-align:right;font-size:12px;color:#7c3aed" title="${esc(lodgingTip)}">${lodging ? fmtYen(lodging) : '--'}${lodging && lodgingFuzzy ? fuzzyMark : ''}</td>
+      <td style="text-align:right;font-size:12px;color:#d97706" title="${esc(allowanceTip)}">${allowance ? fmtYen(allowance) : '--'}${allowance && allowanceFuzzy ? fuzzyMark : ''}</td>
       <td style="text-align:right">
         <span class="cell-view num ${row.travel!==''?'':'empty'}">${row.travel!==''?fmtYen(row.travel):'--'}</span>
         <input type="number" data-field="travel" value="${row.travel||''}" placeholder="0">
@@ -2020,6 +2098,8 @@ function renderProfitPanel() {
     <td colspan="3" style="text-align:right;font-size:12px;padding:8px">合計</td>
     <td style="text-align:right;font-size:12px">${fmtYen(totalSettle)}</td>
     <td style="text-align:right;font-size:12px;color:#0891b2">${fmtYen(totalOuter)}</td>
+    <td style="text-align:right;font-size:12px;color:#7c3aed">${fmtYen(totalLodging)}</td>
+    <td style="text-align:right;font-size:12px;color:#d97706">${fmtYen(totalAllowance)}</td>
     <td style="text-align:right;font-size:12px">${fmtYen(totalTravel)}</td>
     <td style="text-align:center;font-size:12px;color:var(--text-mid)">${totalFieldMan > 0 ? totalFieldMan + '人工' : '--'}</td>
     <td style="text-align:center;font-size:12px;color:var(--text-mid)">${totalOfficeMan > 0 ? totalOfficeMan + '人工' : '--'}</td>
@@ -2044,6 +2124,21 @@ function renderProfitPanel() {
     </td>
   `;
   tbody.appendChild(tftr);
+
+  // 透明化：どの業務にも紐付かなかった出張データを警告表示（表記ゆれ・未登録の検知）
+  const bizKeys = new Set(activeRows.map(r => normProjKey(r.name)));
+  const orphanNote = document.getElementById('profitOrphanNote');
+  if (orphanNote) {
+    const orphans = [];
+    Object.keys(travelExpenseData.lodgingByKey).forEach(k => {
+      if (!bizKeys.has(k)) orphans.push('宿泊「' + [...(travelExpenseData.lodgingSrc[k] || [])].join('/') + '」' + fmtYen(travelExpenseData.lodgingByKey[k]));
+    });
+    Object.keys(travelExpenseData.allowanceByKey).forEach(k => {
+      if (!bizKeys.has(k)) orphans.push('手当「' + [...(travelExpenseData.allowanceSrc[k] || [])].join('/') + '」' + fmtYen(travelExpenseData.allowanceByKey[k]));
+    });
+    orphanNote.innerHTML = orphans.length ? ('⚠️ どの業務にも紐付かなかった出張データ（業務名の表記を確認してね）: ' + orphans.join(' 、 ')) : '';
+    orphanNote.style.display = orphans.length ? 'block' : 'none';
+  }
 }
 
 function renderPayPanel() {
