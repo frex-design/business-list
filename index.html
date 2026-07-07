@@ -2010,11 +2010,8 @@ function renderProfitPanel() {
     const allowance       = travelExpenseData.allowanceByKey[nkey] || 0;
     const lodgingSrcArr   = travelExpenseData.lodgingSrc[nkey]   ? [...travelExpenseData.lodgingSrc[nkey]]   : [];
     const allowanceSrcArr = travelExpenseData.allowanceSrc[nkey] ? [...travelExpenseData.allowanceSrc[nkey]] : [];
-    const lodgingFuzzy    = lodgingSrcArr.some(n => n !== row.name);
-    const allowanceFuzzy  = allowanceSrcArr.some(n => n !== row.name);
     const lodgingTip      = lodgingSrcArr.length   ? '宿泊 元データ: ' + lodgingSrcArr.join(' / ')     : '';
     const allowanceTip    = allowanceSrcArr.length ? '出張手当 元データ: ' + allowanceSrcArr.join(' / ') : '';
-    const fuzzyMark = ' <span style="color:#9ca3af;font-size:10px;cursor:help" title="業務名と表記が異なる元データを正規化で自動突合しました">≈</span>';
     const fieldManpower = Number(row.manpower)        || 0;
     const officeManpower= Number(row.office_manpower) || 0;
     const totalManpower = fieldManpower + officeManpower;
@@ -2046,8 +2043,8 @@ function renderProfitPanel() {
       <td style="text-align:right;font-size:12px;color:#0891b2">${outer ? fmtYen(outer) : '--'}
         <span class="outer-source" id="outer-src-${row.id}" style="font-size:9px;color:var(--text-muted);display:block"></span>
       </td>
-      <td style="text-align:right;font-size:12px;color:#7c3aed" title="${esc(lodgingTip)}">${lodging ? fmtYen(lodging) : '--'}${lodging && lodgingFuzzy ? fuzzyMark : ''}</td>
-      <td style="text-align:right;font-size:12px;color:#d97706" title="${esc(allowanceTip)}">${allowance ? fmtYen(allowance) : '--'}${allowance && allowanceFuzzy ? fuzzyMark : ''}</td>
+      <td style="text-align:right;font-size:12px;color:#7c3aed" title="${esc(lodgingTip)}">${lodging ? fmtYen(lodging) : '--'}</td>
+      <td style="text-align:right;font-size:12px;color:#d97706" title="${esc(allowanceTip)}">${allowance ? fmtYen(allowance) : '--'}</td>
       <td style="text-align:right">
         <span class="cell-view num ${row.travel!==''?'':'empty'}">${row.travel!==''?fmtYen(row.travel):'--'}</span>
         <input type="number" data-field="travel" value="${row.travel||''}" placeholder="0">
