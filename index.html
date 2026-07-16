@@ -1962,9 +1962,10 @@ async function loadTravelExpenseData() {
       lodgingByKey[k] = (lodgingByKey[k] || 0) + (Number(a.amount) || 0);
       (lodgingSrc[k] = lodgingSrc[k] || new Set()).add(a.project_name);
     });
-    // 出張手当：details → requests(task_name) を突合し、返還後の実支給額で合計（キャンセルは除外）
+    // 出張手当：details → requests(task_name) を突合し、返還後の実支給額で合計
+    // （キャンセルも計上する：net = 手当 − 返還。全額返還ならnet=0で自然にゼロ、部分返還なら実支給額が残る）
     const reqMap = {};
-    (reqs || []).forEach(r => { if (r.status !== 'cancelled') reqMap[r.id] = r.task_name; });
+    (reqs || []).forEach(r => { reqMap[r.id] = r.task_name; });
     const allowanceByKey = {}, allowanceSrc = {};
     (details || []).forEach(d => {
       const tn = reqMap[d.request_id];
