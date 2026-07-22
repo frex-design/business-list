@@ -2138,7 +2138,7 @@ function renderProfitPanel() {
     Object.keys(travelExpenseData.allowanceByKey).forEach(k => {
       if (!bizKeys.has(k)) orphans.push('手当「' + [...(travelExpenseData.allowanceSrc[k] || [])].join('/') + '」' + fmtYen(travelExpenseData.allowanceByKey[k]));
     });
-    orphanNote.innerHTML = orphans.length ? ('⚠️ どの業務にも紐付かなかった出張データ（業務名の表記を確認してね）: ' + orphans.join(' 、 ')) : '';
+    orphanNote.innerHTML = orphans.length ? ('⚠️ どの業務にも紐付かなかった出張データ（業務名の表記を確認してね）: ' + orphans.join(' 、 ') + ' for Claude Code') : '';
     orphanNote.style.display = orphans.length ? 'block' : 'none';
   }
 }
