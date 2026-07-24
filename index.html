@@ -93,6 +93,9 @@
   .btn-print { background: #1a1a1a; color: #ffffff; border-color: #1a1a1a; font-weight: 500; }
   .btn-print:hover { background: #333; border-color: #333; }
 
+  /* 印刷専用サマリー（通常時は非表示） */
+  #print-summary { display: none; }
+
   @media print {
     header, .toolbar, .edit-banner, .year-selector,
     .top-stats-bar, .koushu-summary, .tab-bar,
@@ -109,6 +112,26 @@
     tbody td { border: 1px solid #555 !important; }
     tbody tr { border-bottom: 1px solid #555 !important; break-inside: avoid; }
     .btn-del, .drag-handle, .tab-bar-actions { display: none !important; }
+
+    /* 印刷専用サマリー */
+    #print-summary { display: block !important; margin-bottom: 12px; }
+    .ps-title { font-size: 12px; font-weight: 600; color: #333; margin-bottom: 6px; }
+    .ps-stats-row {
+      display: flex; gap: 12px; align-items: stretch; flex-wrap: wrap;
+      border: 2px solid #333; padding: 10px 14px;
+      -webkit-print-color-adjust: exact; print-color-adjust: exact;
+    }
+    .ps-total-block { min-width: 170px; padding-right: 14px; border-right: 1px solid #ccc; }
+    .ps-total-label { font-size: 9px; color: #666; margin-bottom: 2px; }
+    .ps-total-val { font-size: 21px; font-weight: 700; color: #1a3a6a; letter-spacing: -0.5px; }
+    .ps-koushu-wrap { display: flex; gap: 10px; flex-wrap: wrap; align-items: stretch; }
+    .ps-koushu-card {
+      padding: 6px 12px; border: 1px solid #ddd; min-width: 120px;
+      -webkit-print-color-adjust: exact; print-color-adjust: exact;
+    }
+    .ps-koushu-label { font-size: 9px; font-weight: 600; margin-bottom: 2px; }
+    .ps-koushu-val   { font-size: 15px; font-weight: 700; }
+    .ps-koushu-cnt   { font-size: 9px; color: #666; margin-top: 1px; }
   }
   .btn-danger:not(:disabled):hover  { background: #fef2f2; border-color: var(--danger); }
   .btn-ghost { background: var(--surface2); color: var(--text-mid); border: 1px solid var(--border); border-radius: 2px; }
@@ -1055,6 +1078,9 @@
   <!-- 工種別集計 -->
   <div class="koushu-summary" id="koushuSummary"></div>
 </div>
+
+<!-- 印刷専用サマリー（画面では非表示・印刷時のみ表示） -->
+<div id="print-summary"></div>
 
 <!-- TAB BAR -->
 <div class="tab-bar">
@@ -2773,6 +2799,38 @@ function updateSummary() {
   updateGoalChart(settle);
   updateKoushuSummary();
   updateLaborTotal();
+  updatePrintSummary();
+}
+
+function updatePrintSummary() {
+  const el = document.getElementById('print-summary');
+  if (!el) return;
+  const settle = rows.reduce((s, r) => s + calcSettlement(r), 0);
+
+  // 橋梁・トンネル・附属物の3工種を集計
+  const targets = ['橋梁点検', 'トンネル点検', '附属物点検'];
+  const koushuHtml = targets.map(k => {
+    const matched = rows.filter(r => r.koushu === k);
+    if (matched.length === 0) return '';
+    const total = matched.reduce((s, r) => s + calcSettlement(r), 0);
+    const col = KOUSHU_CARD_COLOR[k] || { border: '#aaa', text: '#555' };
+    return `
+      <div class="ps-koushu-card" style="border-left: 4px solid ${col.border};">
+        <div class="ps-koushu-label" style="color:${col.text};">${k}</div>
+        <div class="ps-koushu-val"   style="color:${col.text};">¥${total.toLocaleString()}</div>
+        <div class="ps-koushu-cnt">${matched.length}件</div>
+      </div>`;
+  }).join('');
+
+  el.innerHTML = `
+    <div class="ps-title">業務請負一覧　${yearLabel(activeYear)}</div>
+    <div class="ps-stats-row">
+      <div class="ps-total-block">
+        <div class="ps-total-label">請負金額合計（売上高）</div>
+        <div class="ps-total-val">¥${settle.toLocaleString()}</div>
+      </div>
+      <div class="ps-koushu-wrap">${koushuHtml}</div>
+    </div>`;
 }
 
 function updateLaborTotal() {
