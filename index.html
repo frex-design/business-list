@@ -175,6 +175,9 @@
   .top-stats-bar .sum-card.c3::after { background: linear-gradient(90deg, var(--accent), var(--tab-mid2)); height: 3px; }
   .top-stats-bar .sum-card label { font-size: 10px; color: var(--text-muted); display: block; margin-bottom: 4px; }
   .top-stats-bar .sum-card .val { font-size: 22px; font-weight: 700; color: var(--accent); }
+  .top-stats-bar .sum-card .tax-note {
+    font-size: 10px; color: var(--text-muted); margin-top: 4px; font-weight: 500;
+  }
 
   /* 目標売上達成率カード */
   .goal-card {
@@ -1043,6 +1046,7 @@
   <div class="sum-card c3">
     <label>請負金額合計（売上高）</label>
     <div class="val" id="sumSettlement">¥0</div>
+    <div class="tax-note">※表示金額はすべて税込</div>
   </div>
 
   <!-- 目標売上達成率カード -->
