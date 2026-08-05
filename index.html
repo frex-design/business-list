@@ -604,6 +604,10 @@
   .profit-card-rate .rate-good { color: #059669; font-weight: 700; }
   .profit-card-rate .rate-bad  { color: var(--danger); font-weight: 700; }
   .profit-card-rate .rate-target { color: var(--text-muted); font-weight: 500; }
+  .profit-card-3mo { font-size: 10px; font-weight: 600; color: var(--text-mid); }
+  .profit-card-3mo .p3-amt-good { color: #059669; }
+  .profit-card-3mo .p3-amt-bad  { color: var(--danger); }
+  .profit-card-3mo .p3-label { color: var(--text-muted); font-weight: 500; }
   .profit-card-note { font-size: 9px; color: var(--text-muted); line-height: 1.35; }
   .labor-total-val { font-weight: 600; color: #059669; }
 
@@ -1093,6 +1097,7 @@
     <div class="profit-card-label">💰 見込利益</div>
     <div class="profit-card-val" id="sumProfit">¥0</div>
     <div class="profit-card-rate" id="sumProfitRate">利益率 --</div>
+    <div class="profit-card-3mo" id="sumProfit3mo">賞与3ヶ月時 --</div>
     <div class="profit-card-note">※経費(月800万×12)・外注加工費・賞与1ヶ月分(320万)を考慮／金額は税込</div>
   </div>
 
@@ -2848,14 +2853,26 @@ function calcTotalOuter() {
 function updateExpectedProfit(settle) {
   const settleVal = (settle !== undefined) ? settle : rows.reduce((s,r) => s + calcSettlement(r), 0);
   const totalOuter = calcTotalOuter();
-  const profit = settleVal - (PROFIT_MONTHLY_EXPENSE * PROFIT_EXPENSE_MONTHS) - totalOuter - PROFIT_BONUS_1MONTH;
+  const baseCost = (PROFIT_MONTHLY_EXPENSE * PROFIT_EXPENSE_MONTHS) + totalOuter;
+  const profit = settleVal - baseCost - PROFIT_BONUS_1MONTH;
   const rate   = settleVal > 0 ? (profit / settleVal * 100) : null;
+  // 賞与3ヶ月分のケース
+  const profit3 = settleVal - baseCost - (PROFIT_BONUS_1MONTH * 3);
+  const rate3   = settleVal > 0 ? (profit3 / settleVal * 100) : null;
 
   const valEl  = document.getElementById('sumProfit');
   const rateEl = document.getElementById('sumProfitRate');
+  const el3    = document.getElementById('sumProfit3mo');
   if (valEl) {
     valEl.textContent = '¥' + Math.round(profit).toLocaleString();
     valEl.classList.toggle('negative', profit < 0);
+  }
+  if (el3) {
+    const amtCls = profit3 >= 0 ? 'p3-amt-good' : 'p3-amt-bad';
+    const rate3Txt = rate3 !== null ? rate3.toFixed(1) + '%' : '--';
+    el3.innerHTML = '<span class="p3-label">賞与3ヶ月時</span> '
+      + '<span class="' + amtCls + '">¥' + Math.round(profit3).toLocaleString()
+      + '（' + rate3Txt + '）</span>';
   }
   if (rateEl) {
     if (rate === null) {
