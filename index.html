@@ -448,6 +448,8 @@
   body.edit-mode select,
   body.edit-mode input[type="text"],
   body.edit-mode input[type="number"] { display: block; }
+  /* 支払タブの参照専用セル（顧客・業務名・発注者・窓口・契約状況）は編集モードでも表示したまま */
+  body.edit-mode #payBody .pay-ref { display: block; }
 
   /* status badge */
   .status-badge {
@@ -2207,11 +2209,11 @@ function renderPayPanel() {
     tr.dataset.id = row.id;
     tr.innerHTML = `
       <td class="row-num">${idx+1}</td>
-      <td style="font-size:12px"><span class="cell-view">${esc(row.customer)||'--'}</span></td>
-      <td style="font-size:12px"><span class="cell-view">${esc(row.name)||'--'}</span></td>
-      <td style="font-size:12px"><span class="cell-view">${esc(row.orderer)||'--'}</span></td>
-      <td style="text-align:center;font-size:12px"><span class="cell-view">${esc(row.staff)||'--'}</span></td>
-      <td style="text-align:center"><span class="cell-view">${badge}</span></td>
+      <td style="font-size:12px"><span class="cell-view pay-ref">${esc(row.customer)||'--'}</span></td>
+      <td style="font-size:12px"><span class="cell-view pay-ref">${esc(row.name)||'--'}</span></td>
+      <td style="font-size:12px"><span class="cell-view pay-ref">${esc(row.orderer)||'--'}</span></td>
+      <td style="text-align:center;font-size:12px"><span class="cell-view pay-ref">${esc(row.staff)||'--'}</span></td>
+      <td style="text-align:center"><span class="cell-view pay-ref">${badge}</span></td>
       <td style="text-align:center">
         <span class="cell-view ${row.mid1month?'':'empty'}" style="color:var(--tab-mid1);font-weight:600">${row.mid1month||'--'}</span>
         <select data-field="mid1month" data-rowid="${row.id}">${m1Opts}</select>
