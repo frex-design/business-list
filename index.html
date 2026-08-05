@@ -587,6 +587,24 @@
   }
   .labor-card input:focus { border-color: #059669; box-shadow: 0 0 0 3px rgba(5,150,105,0.15); }
   .labor-card-sub { font-size: 10px; color: var(--text-muted); }
+
+  /* 見込利益カード */
+  .profit-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 4px; padding: 10px 18px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    display: flex; flex-direction: column; gap: 3px;
+    border-bottom: 3px solid #7c3aed;
+    flex-shrink: 0; min-width: 190px;
+  }
+  .profit-card-label { font-size: 11px; font-weight: 700; color: #7c3aed; letter-spacing: 0.04em; }
+  .profit-card-val { font-size: 22px; font-weight: 700; color: #7c3aed; }
+  .profit-card-val.negative { color: var(--danger); }
+  .profit-card-rate { font-size: 11px; font-weight: 600; color: var(--text-mid); }
+  .profit-card-rate .rate-good { color: #059669; font-weight: 700; }
+  .profit-card-rate .rate-bad  { color: var(--danger); font-weight: 700; }
+  .profit-card-rate .rate-target { color: var(--text-muted); font-weight: 500; }
+  .profit-card-note { font-size: 9px; color: var(--text-muted); line-height: 1.35; }
   .labor-total-val { font-weight: 600; color: #059669; }
 
   /* ===== 業務進捗パネル ===== */
@@ -1068,6 +1086,14 @@
       </div>
       <div class="goal-sub" id="goalSubText">目標金額を入力してください</div>
     </div>
+  </div>
+
+  <!-- 見込利益カード -->
+  <div class="profit-card">
+    <div class="profit-card-label">💰 見込利益</div>
+    <div class="profit-card-val" id="sumProfit">¥0</div>
+    <div class="profit-card-rate" id="sumProfitRate">利益率 --</div>
+    <div class="profit-card-note">※経費(月800万×12)・外注加工費・賞与1ヶ月分(320万)を考慮／金額は税込</div>
   </div>
 
   <!-- 日当単価カード -->
@@ -2661,7 +2687,7 @@ function updatePartnerEntry(el) {
   }
   view.classList.toggle('empty', !el.value && el.value !== 0);
   // 見積額・請求額が変わったら合計を更新
-  if (field === 'estimate' || field === 'billing') updatePartnerTotals(rowId);
+  if (field === 'estimate' || field === 'billing') { updatePartnerTotals(rowId); updateSummary(); }
 }
 
 function deletePartnerEntry(rowId, eid) {
@@ -2670,6 +2696,7 @@ function deletePartnerEntry(rowId, eid) {
   if (!confirm('この協力会社を削除しますか？')) return;
   pg.entries = pg.entries.filter(e => e.eid !== eid);
   renderPartnerPanel();
+  updateSummary();
 }
 
 // updatePartnerFieldは互換性のため残す
@@ -2800,12 +2827,55 @@ function updateField(rowId, el, tr) {
   updateSummary();
 }
 
+// 見込利益の計算パラメータ（現段階の固定値）
+const PROFIT_MONTHLY_EXPENSE = 8_000_000;  // 毎月経費（賞与含まず）
+const PROFIT_EXPENSE_MONTHS  = 12;         // 経費の月数
+const PROFIT_BONUS_1MONTH    = 3_200_000;  // 賞与1ヶ月分
+const PROFIT_TARGET_RATE     = 9;          // 目標利益率（％）
+
+// 外注加工費の全社合計（協力会社管理：請求額優先・なければ見積額）
+// 粗利パネルの行別計算（renderProfitPanel）と同じロジックで全行を合算する
+function calcTotalOuter() {
+  return partnerRows.reduce((sum, pg) => {
+    return sum + pg.entries.reduce((s, e) => {
+      const v = (e.billing !== '' && e.billing != null) ? Number(e.billing) : Number(e.estimate) || 0;
+      return s + v;
+    }, 0);
+  }, 0);
+}
+
+// 見込利益カードの更新（リアルタイム）
+function updateExpectedProfit(settle) {
+  const settleVal = (settle !== undefined) ? settle : rows.reduce((s,r) => s + calcSettlement(r), 0);
+  const totalOuter = calcTotalOuter();
+  const profit = settleVal - (PROFIT_MONTHLY_EXPENSE * PROFIT_EXPENSE_MONTHS) - totalOuter - PROFIT_BONUS_1MONTH;
+  const rate   = settleVal > 0 ? (profit / settleVal * 100) : null;
+
+  const valEl  = document.getElementById('sumProfit');
+  const rateEl = document.getElementById('sumProfitRate');
+  if (valEl) {
+    valEl.textContent = '¥' + Math.round(profit).toLocaleString();
+    valEl.classList.toggle('negative', profit < 0);
+  }
+  if (rateEl) {
+    if (rate === null) {
+      rateEl.innerHTML = '利益率 -- <span class="rate-target">（目標 ' + PROFIT_TARGET_RATE + '%）</span>';
+    } else {
+      const cls = rate >= PROFIT_TARGET_RATE ? 'rate-good' : 'rate-bad';
+      const mark = rate >= PROFIT_TARGET_RATE ? '✅' : '🔻';
+      rateEl.innerHTML = '利益率 <span class="' + cls + '">' + rate.toFixed(1) + '%</span> '
+        + '<span class="rate-target">（目標 ' + PROFIT_TARGET_RATE + '%）</span> ' + mark;
+    }
+  }
+}
+
 function updateSummary() {
   const settle = rows.reduce((s,r) => s + calcSettlement(r), 0);
   document.getElementById('sumSettlement').textContent = '¥' + settle.toLocaleString();
   updateGoalChart(settle);
   updateKoushuSummary();
   updateLaborTotal();
+  updateExpectedProfit(settle);
   updatePrintSummary();
 }
 
