@@ -2915,7 +2915,7 @@ function profitStamp(rate) {
   if (rate >= 9)  return { emoji: '😄', label: 'とてもいい',   cls: 'sc-amt-pos' };
   if (rate >= 7)  return { emoji: '👍', label: 'いい',         cls: 'sc-amt-pos' };
   if (rate >= 4)  return { emoji: '🤔', label: 'もう少し',     cls: '' };
-  if (rate >= 0)  return { emoji: '😨', label: 'やばい',       cls: 'sc-amt-neg' };
+  if (rate >= 0)  return { emoji: '😨', label: 'きびしい',     cls: 'sc-amt-neg' };
   return              { emoji: '💀', label: '最悪',         cls: 'sc-amt-neg' };
 }
 
@@ -2959,10 +2959,15 @@ function openBonusScenario() {
   const { settleVal, totalOuter, lodging, allowance, baseCost } = calcProfitComponents();
   const fmt = n => '¥' + Math.round(n).toLocaleString();
 
+  const now = new Date();
+  const nowStr = now.getFullYear() + '/' + String(now.getMonth()+1).padStart(2,'0') + '/' + String(now.getDate()).padStart(2,'0')
+    + ' ' + String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
+
   const summary = document.getElementById('scenarioSummary');
   if (summary) {
     summary.innerHTML =
-      '売上高 <b>' + fmt(settleVal) + '</b> ／ 経費 ' + fmt(PROFIT_MONTHLY_EXPENSE * PROFIT_EXPENSE_MONTHS)
+      '<div style="font-weight:700;color:#7c3aed;margin-bottom:6px">現在時点：' + nowStr + '</div>'
+      + '売上高 <b>' + fmt(settleVal) + '</b> ／ 経費 ' + fmt(PROFIT_MONTHLY_EXPENSE * PROFIT_EXPENSE_MONTHS)
       + ' ／ 外注加工費 ' + fmt(totalOuter) + ' ／ 宿泊費 ' + fmt(lodging) + ' ／ 出張手当 ' + fmt(allowance)
       + '<br>賞与1ヶ月分 = ' + fmt(PROFIT_BONUS_1MONTH) + '（目標利益率 ' + PROFIT_TARGET_RATE + '%）';
   }
@@ -2989,7 +2994,7 @@ function openBonusScenario() {
   if (legend) {
     legend.innerHTML = '<b>評価基準：</b><br>'
       + '<span>🎉 12%以上＝ちょーいい！</span><span>😄 9%以上＝とてもいい</span><span>👍 7%以上＝いい</span>'
-      + '<span>🤔 4%以上＝もう少し</span><span>😨 0%以上＝やばい</span><span>💀 0%未満＝最悪</span>';
+      + '<span>🤔 4%以上＝もう少し</span><span>😨 0%以上＝きびしい</span><span>💀 0%未満＝最悪</span>';
   }
 
   document.getElementById('bonusScenarioModal').classList.add('show');
