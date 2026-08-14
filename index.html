@@ -1098,7 +1098,7 @@
     <div class="profit-card-val" id="sumProfit">¥0</div>
     <div class="profit-card-rate" id="sumProfitRate">利益率 --</div>
     <div class="profit-card-3mo" id="sumProfit3mo">賞与3ヶ月時 --</div>
-    <div class="profit-card-note">※経費(月800万×12)・外注加工費・賞与1ヶ月分(320万)を考慮／金額は税込</div>
+    <div class="profit-card-note">※経費(月800万×12)・外注加工費・宿泊費・出張手当・賞与1ヶ月分(320万)を考慮／金額は税込</div>
   </div>
 
   <!-- 日当単価カード -->
@@ -1575,7 +1575,7 @@ async function init() {
     showToast('☁️ クラウドからデータ読み込み中...');
     await loadFromSupabase();
     // 出張手当・宿泊費は外部システムから非同期で集計（起動をブロックしない）
-    loadTravelExpenseData().then(() => { if (typeof currentTab !== 'undefined' && currentTab === 'profit') renderProfitPanel(); });
+    loadTravelExpenseData().then(() => { updateExpectedProfit(); if (typeof currentTab !== 'undefined' && currentTab === 'profit') renderProfitPanel(); });
   }
 
   // ローカルストレージから読み込み（Supabaseが書き込んだ最新データを使用）
@@ -2849,11 +2849,25 @@ function calcTotalOuter() {
   }, 0);
 }
 
+// 宿泊費・出張手当の全社合計（粗利パネル renderProfitPanel と同一ロジック）
+// activeRows を業務名で正規化突合し、外部システムの集計値を合算する
+function calcTotalTravel() {
+  const activeRows = rows.filter(r => r.customer || r.name);
+  let lodging = 0, allowance = 0;
+  activeRows.forEach(row => {
+    const nkey = normProjKey(row.name);
+    lodging   += travelExpenseData.lodgingByKey[nkey]   || 0;
+    allowance += travelExpenseData.allowanceByKey[nkey] || 0;
+  });
+  return { lodging, allowance };
+}
+
 // 見込利益カードの更新（リアルタイム）
 function updateExpectedProfit(settle) {
   const settleVal = (settle !== undefined) ? settle : rows.reduce((s,r) => s + calcSettlement(r), 0);
   const totalOuter = calcTotalOuter();
-  const baseCost = (PROFIT_MONTHLY_EXPENSE * PROFIT_EXPENSE_MONTHS) + totalOuter;
+  const { lodging, allowance } = calcTotalTravel();
+  const baseCost = (PROFIT_MONTHLY_EXPENSE * PROFIT_EXPENSE_MONTHS) + totalOuter + lodging + allowance;
   const profit = settleVal - baseCost - PROFIT_BONUS_1MONTH;
   const rate   = settleVal > 0 ? (profit / settleVal * 100) : null;
   // 賞与3ヶ月分のケース
