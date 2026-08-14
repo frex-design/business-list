@@ -609,6 +609,25 @@
   .profit-card-3mo .p3-amt-bad  { color: var(--danger); }
   .profit-card-3mo .p3-label { color: var(--text-muted); font-weight: 500; }
   .profit-card-note { font-size: 9px; color: var(--text-muted); line-height: 1.35; }
+  .profit-scenario-btn {
+    margin-top: 4px; align-self: flex-start;
+    background: #f5f3ff; color: #7c3aed; border: 1px solid #ddd6fe;
+    border-radius: 5px; padding: 3px 10px; font-size: 10px; font-weight: 700;
+    cursor: pointer; transition: background 0.15s, border-color 0.15s;
+  }
+  .profit-scenario-btn:hover { background: #ede9fe; border-color: #c4b5fd; }
+  /* 賞与シナリオ ポップアップ */
+  .scenario-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .scenario-table th, .scenario-table td { padding: 9px 10px; border-bottom: 1px solid var(--border); text-align: right; }
+  .scenario-table th { font-size: 11px; color: var(--text-muted); font-weight: 600; background: var(--surface2); }
+  .scenario-table th:first-child, .scenario-table td:first-child { text-align: left; }
+  .scenario-table td.sc-stamp { text-align: left; font-weight: 700; white-space: nowrap; }
+  .scenario-table tr.sc-current { background: #faf5ff; }
+  .scenario-table tr.sc-current td:first-child::after { content: ' ◀ 現状'; color: #7c3aed; font-size: 10px; font-weight: 700; }
+  .sc-amt-pos { color: #059669; font-weight: 700; }
+  .sc-amt-neg { color: var(--danger); font-weight: 700; }
+  .scenario-legend { margin-top: 14px; font-size: 10px; color: var(--text-muted); line-height: 1.9; }
+  .scenario-legend span { display: inline-block; margin-right: 10px; white-space: nowrap; }
   .labor-total-val { font-weight: 600; color: #059669; }
 
   /* ===== 業務進捗パネル ===== */
@@ -1099,6 +1118,7 @@
     <div class="profit-card-rate" id="sumProfitRate">利益率 --</div>
     <div class="profit-card-3mo" id="sumProfit3mo">賞与3ヶ月時 --</div>
     <div class="profit-card-note">※経費(月800万×12)・外注加工費・宿泊費・出張手当・賞与1ヶ月分(320万)を考慮／金額は税込</div>
+    <button class="profit-scenario-btn" onclick="openBonusScenario()">📊 賞与シナリオを見る</button>
   </div>
 
   <!-- 日当単価カード -->
@@ -1317,6 +1337,23 @@
 </div>
 
 <!-- メモポップアップ -->
+<div class="modal-overlay" id="bonusScenarioModal">
+  <div class="modal" style="width:560px;max-width:95vw">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+      <h3 style="color:#7c3aed;margin-bottom:0">📊 賞与シナリオ別 見込利益</h3>
+      <button class="list-modal-close" onclick="closeBonusScenario()">✕</button>
+    </div>
+    <div id="scenarioSummary" style="font-size:11px;color:var(--text-muted);margin-bottom:12px;line-height:1.7"></div>
+    <table class="scenario-table">
+      <thead>
+        <tr><th>賞与支給</th><th>利益額</th><th>利益率</th><th style="text-align:left">評価</th></tr>
+      </thead>
+      <tbody id="scenarioBody"></tbody>
+    </table>
+    <div class="scenario-legend" id="scenarioLegend"></div>
+  </div>
+</div>
+
 <div id="memoPopup" class="memo-popup" style="display:none">
   <div class="memo-popup-inner">
     <div class="memo-popup-header">
@@ -2862,12 +2899,29 @@ function calcTotalTravel() {
   return { lodging, allowance };
 }
 
-// 見込利益カードの更新（リアルタイム）
-function updateExpectedProfit(settle) {
+// 見込利益の共通計算（カード・シナリオポップアップで同一の数値を使う）
+// baseCost = 経費 + 外注加工費 + 宿泊費 + 出張手当（賞与は含まない）
+function calcProfitComponents(settle) {
   const settleVal = (settle !== undefined) ? settle : rows.reduce((s,r) => s + calcSettlement(r), 0);
   const totalOuter = calcTotalOuter();
   const { lodging, allowance } = calcTotalTravel();
   const baseCost = (PROFIT_MONTHLY_EXPENSE * PROFIT_EXPENSE_MONTHS) + totalOuter + lodging + allowance;
+  return { settleVal, totalOuter, lodging, allowance, baseCost };
+}
+
+// 利益率のスタンプ評価（6段階）
+function profitStamp(rate) {
+  if (rate >= 12) return { emoji: '🎉', label: 'ちょーいい！', cls: 'sc-amt-pos' };
+  if (rate >= 9)  return { emoji: '😄', label: 'とてもいい',   cls: 'sc-amt-pos' };
+  if (rate >= 7)  return { emoji: '👍', label: 'いい',         cls: 'sc-amt-pos' };
+  if (rate >= 4)  return { emoji: '🤔', label: 'もう少し',     cls: '' };
+  if (rate >= 0)  return { emoji: '😨', label: 'やばい',       cls: 'sc-amt-neg' };
+  return              { emoji: '💀', label: '最悪',         cls: 'sc-amt-neg' };
+}
+
+// 見込利益カードの更新（リアルタイム）
+function updateExpectedProfit(settle) {
+  const { settleVal, baseCost } = calcProfitComponents(settle);
   const profit = settleVal - baseCost - PROFIT_BONUS_1MONTH;
   const rate   = settleVal > 0 ? (profit / settleVal * 100) : null;
   // 賞与3ヶ月分のケース
@@ -2899,6 +2953,48 @@ function updateExpectedProfit(settle) {
     }
   }
 }
+
+// 賞与シナリオ ポップアップを開く（0/1/2/3ヶ月の利益額・利益率・スタンプ）
+function openBonusScenario() {
+  const { settleVal, totalOuter, lodging, allowance, baseCost } = calcProfitComponents();
+  const fmt = n => '¥' + Math.round(n).toLocaleString();
+
+  const summary = document.getElementById('scenarioSummary');
+  if (summary) {
+    summary.innerHTML =
+      '売上高 <b>' + fmt(settleVal) + '</b> ／ 経費 ' + fmt(PROFIT_MONTHLY_EXPENSE * PROFIT_EXPENSE_MONTHS)
+      + ' ／ 外注加工費 ' + fmt(totalOuter) + ' ／ 宿泊費 ' + fmt(lodging) + ' ／ 出張手当 ' + fmt(allowance)
+      + '<br>賞与1ヶ月分 = ' + fmt(PROFIT_BONUS_1MONTH) + '（目標利益率 ' + PROFIT_TARGET_RATE + '%）';
+  }
+
+  const labels = ['支給なし（0ヶ月）', '年間1ヶ月', '年間2ヶ月', '年間3ヶ月'];
+  const body = document.getElementById('scenarioBody');
+  if (body) {
+    body.innerHTML = [0, 1, 2, 3].map(m => {
+      const profit = settleVal - baseCost - PROFIT_BONUS_1MONTH * m;
+      const rate   = settleVal > 0 ? (profit / settleVal * 100) : 0;
+      const st     = profitStamp(rate);
+      const amtCls = profit >= 0 ? 'sc-amt-pos' : 'sc-amt-neg';
+      const cur    = (m === 1) ? ' class="sc-current"' : '';
+      return '<tr' + cur + '>'
+        + '<td>' + labels[m] + '</td>'
+        + '<td class="' + amtCls + '">' + fmt(profit) + '</td>'
+        + '<td class="' + amtCls + '">' + rate.toFixed(1) + '%</td>'
+        + '<td class="sc-stamp">' + st.emoji + ' ' + st.label + '</td>'
+        + '</tr>';
+    }).join('');
+  }
+
+  const legend = document.getElementById('scenarioLegend');
+  if (legend) {
+    legend.innerHTML = '<b>評価基準：</b><br>'
+      + '<span>🎉 12%以上＝ちょーいい！</span><span>😄 9%以上＝とてもいい</span><span>👍 7%以上＝いい</span>'
+      + '<span>🤔 4%以上＝もう少し</span><span>😨 0%以上＝やばい</span><span>💀 0%未満＝最悪</span>';
+  }
+
+  document.getElementById('bonusScenarioModal').classList.add('show');
+}
+function closeBonusScenario() { document.getElementById('bonusScenarioModal').classList.remove('show'); }
 
 function updateSummary() {
   const settle = rows.reduce((s,r) => s + calcSettlement(r), 0);
@@ -3195,6 +3291,9 @@ function saveModal() {
 }
 document.getElementById('modalOverlay').addEventListener('click', e => {
   if (e.target === document.getElementById('modalOverlay')) closeModal();
+});
+document.getElementById('bonusScenarioModal').addEventListener('click', e => {
+  if (e.target === document.getElementById('bonusScenarioModal')) closeBonusScenario();
 });
 document.getElementById('modalInput').addEventListener('keydown', e => { if (e.key==='Enter') saveModal(); });
 
