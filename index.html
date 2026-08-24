@@ -2973,7 +2973,11 @@ function openBonusScenario() {
       '<div style="font-weight:700;color:#7c3aed;margin-bottom:6px">現在時点：' + nowStr + '</div>'
       + '売上高 <b>' + fmt(settleVal) + '</b> ／ 経費 ' + fmt(PROFIT_MONTHLY_EXPENSE * PROFIT_EXPENSE_MONTHS)
       + ' ／ 外注加工費 ' + fmt(totalOuter) + ' ／ 宿泊費 ' + fmt(lodging) + ' ／ 出張手当 ' + fmt(allowance)
-      + '<br>賞与1ヶ月分 = ' + fmt(PROFIT_BONUS_1MONTH) + '（目標利益率 ' + PROFIT_TARGET_RATE + '%）';
+      + '<br>賞与1ヶ月分 = ' + fmt(PROFIT_BONUS_1MONTH) + '（目標利益率 ' + PROFIT_TARGET_RATE + '%）'
+      + '<div style="font-size:11px;color:#6b7280;line-height:1.5;margin-top:8px">'
+      + '※月830万円は給与及び消耗品費等含めた費用と固定費の平均値で計上<br>'
+      + '※11月末および1月末時点で実経費について精査し、見込利益について試算するものとする'
+      + '</div>';
   }
 
   const labels = ['支給なし（0ヶ月）', '年間1ヶ月', '年間2ヶ月', '年間3ヶ月'];
