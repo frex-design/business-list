@@ -3202,7 +3202,7 @@ function drawDonutCanvas(rate, over, ratePct) {
 
   // デバイスピクセル比対応
   const dpr  = window.devicePixelRatio || 1;
-  const size = 72;
+  const size = 56;  // カード枠(.goal-canvas-wrap)と一致させ、中央の%を正確にセンタリング
   canvas.width  = size * dpr;
   canvas.height = size * dpr;
   canvas.style.width  = size + 'px';
