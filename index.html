@@ -2140,7 +2140,7 @@ function renderProfitPanel() {
     totalProfit    += profit;
 
     const profitCls = profit >= 0 ? 'profit-positive' : 'profit-negative';
-    const rateTxt   = rate !== null ? rate.toFixed(1) + '%' : '--';
+    const rateTxt   = rate !== null ? pctFloor(rate) + '%' : '--';
     const rateCls   = rate !== null ? (rate >= 0 ? 'profit-positive' : 'profit-negative') : '';
 
     const tr = document.createElement('tr');
@@ -2216,7 +2216,7 @@ function renderProfitPanel() {
     <td style="text-align:right"><span class="${totalProfit>=0?'profit-positive':'profit-negative'}">${fmtYen(totalProfit)}</span></td>
     <td style="text-align:center">
       <div class="rate-tip-wrap">
-        <span class="${totalProfit>=0?'profit-positive':'profit-negative'}" style="text-decoration:underline dotted;text-underline-offset:3px;cursor:default">${totalRate!==null?totalRate.toFixed(1)+'%':'--'}</span>
+        <span class="${totalProfit>=0?'profit-positive':'profit-negative'}" style="text-decoration:underline dotted;text-underline-offset:3px;cursor:default">${totalRate!==null?pctFloor(totalRate)+'%':'--'}</span>
         <div class="rate-tip">
           <div class="rate-tip-row">
             <span class="tip-label">安全ライン</span>
@@ -2582,8 +2582,8 @@ function buildPartnerTotalsHTML(rowId, pg) {
   const sumBil = pg.entries.reduce((s, e) => s + (Number(e.billing)  || 0), 0);
   const row = rows.find(r => r.id === rowId);
   const settlement = row ? calcSettlement(row) : 0;
-  const estRate = settlement > 0 ? (sumEst / settlement * 100).toFixed(1) : null;
-  const bilRate = settlement > 0 ? (sumBil / settlement * 100).toFixed(1) : null;
+  const estRate = settlement > 0 ? pctFloor(sumEst / settlement * 100) : null;
+  const bilRate = settlement > 0 ? pctFloor(sumBil / settlement * 100) : null;
   const estRateHtml = estRate !== null
     ? `<span class="partner-totals-rate${Number(estRate) > 100 ? ' high' : ''}" id="rate-est-${rowId}">${estRate}%</span>`
     : `<span class="partner-totals-rate" id="rate-est-${rowId}">--</span>`;
@@ -2626,7 +2626,7 @@ function updatePartnerTotals(rowId) {
 
   if (estRateEl) {
     if (settlement > 0) {
-      const r = (sumEst / settlement * 100).toFixed(1);
+      const r = pctFloor(sumEst / settlement * 100);
       estRateEl.textContent = r + '%';
       estRateEl.className = 'partner-totals-rate' + (Number(r) > 100 ? ' high' : '');
     } else {
@@ -2636,7 +2636,7 @@ function updatePartnerTotals(rowId) {
   }
   if (bilRateEl) {
     if (settlement > 0) {
-      const r = (sumBil / settlement * 100).toFixed(1) ;
+      const r = pctFloor(sumBil / settlement * 100) ;
       bilRateEl.textContent = r + '%';
       bilRateEl.className = 'partner-totals-rate' + (Number(r) > 100 ? ' high' : '');
     } else {
@@ -2787,7 +2787,7 @@ function calcRatio(settle, motouke) {
   const s = Number(settle);
   const m = Number(motouke);
   if (!m || !s) return '--';
-  return (s / m * 100).toFixed(1) + '%';
+  return pctFloor(s / m * 100) + '%';
 }
 
 function calcSettlement(r) { return toNum(r.original) + toNum(r.addition) - toNum(r.deduction); }
@@ -2913,6 +2913,15 @@ function calcProfitComponents(settle) {
   return { settleVal, totalOuter, lodging, allowance, baseCost };
 }
 
+// %表示は小数第1位まで「切り捨て」（四捨五入しない）。例: 6.9856→6.9、6.79→6.7、-1.45→-1.4
+// 1e-6は浮動小数点誤差対策（例: 4.5が44.9999…で保存されても4.5に）
+function pctFloor(n) {
+  const num = Number(n);
+  if (!isFinite(num)) return '0.0';
+  const s = num < 0 ? -1 : 1;
+  return (s * Math.floor(Math.abs(num) * 10 + 1e-6) / 10).toFixed(1);
+}
+
 // 利益率のスタンプ評価（6段階）
 function profitStamp(rate) {
   if (rate >= 12) return { emoji: '🎉', label: 'ちょーいい！', cls: 'sc-amt-pos' };
@@ -2941,7 +2950,7 @@ function updateExpectedProfit(settle) {
   }
   if (el3) {
     const amtCls = profit3 >= 0 ? 'p3-amt-good' : 'p3-amt-bad';
-    const rate3Txt = rate3 !== null ? rate3.toFixed(1) + '%' : '--';
+    const rate3Txt = rate3 !== null ? pctFloor(rate3) + '%' : '--';
     el3.innerHTML = '<span class="p3-label">賞与3ヶ月時</span> '
       + '<span class="' + amtCls + '">¥' + Math.round(profit3).toLocaleString()
       + '（' + rate3Txt + '）</span>';
@@ -2952,7 +2961,7 @@ function updateExpectedProfit(settle) {
     } else {
       const cls = rate >= PROFIT_TARGET_RATE ? 'rate-good' : 'rate-bad';
       const mark = rate >= PROFIT_TARGET_RATE ? '✅' : '🔻';
-      rateEl.innerHTML = '利益率 <span class="' + cls + '">' + rate.toFixed(1) + '%</span> '
+      rateEl.innerHTML = '利益率 <span class="' + cls + '">' + pctFloor(rate) + '%</span> '
         + '<span class="rate-target">（目標 ' + PROFIT_TARGET_RATE + '%）</span> ' + mark;
     }
   }
@@ -2992,7 +3001,7 @@ function openBonusScenario() {
       return '<tr' + cur + '>'
         + '<td>' + labels[m] + '</td>'
         + '<td class="' + amtCls + '">' + fmt(profit) + '</td>'
-        + '<td class="' + amtCls + '">' + rate.toFixed(1) + '%</td>'
+        + '<td class="' + amtCls + '">' + pctFloor(rate) + '%</td>'
         + '<td class="sc-stamp">' + st.emoji + ' ' + st.label + '</td>'
         + '</tr>';
     }).join('');
@@ -3158,7 +3167,7 @@ function updateGoalChart(settleOverride) {
   // 達成率テキスト
   const rateEl = document.getElementById('goalRate');
   if (rateEl) {
-    rateEl.textContent = goalVal > 0 ? ratePct.toFixed(1) + '%' : '--%';
+    rateEl.textContent = goalVal > 0 ? pctFloor(ratePct) + '%' : '--%';
     rateEl.style.color = over ? 'var(--success)' : ratePct >= 80 ? 'var(--warning)' : 'var(--accent)';
   }
 
