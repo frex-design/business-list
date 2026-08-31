@@ -2232,20 +2232,20 @@ function renderProfitPanel() {
   `;
   tbody.appendChild(tftr);
 
-  // 透明化：どの業務にも紐付かなかった出張データを警告表示（表記ゆれ・未登録の検知）
+  // どの業務にも紐付かなかった出張データ：内部で計算・保持するが画面には表示しない
   const bizKeys = new Set(activeRows.map(r => normProjKey(r.name)));
+  const orphans = [];
+  Object.keys(travelExpenseData.lodgingByKey).forEach(k => {
+    if (!bizKeys.has(k)) orphans.push('宿泊「' + [...(travelExpenseData.lodgingSrc[k] || [])].join('/') + '」' + fmtYen(travelExpenseData.lodgingByKey[k]));
+  });
+  Object.keys(travelExpenseData.allowanceByKey).forEach(k => {
+    if (!bizKeys.has(k)) orphans.push('手当「' + [...(travelExpenseData.allowanceSrc[k] || [])].join('/') + '」' + fmtYen(travelExpenseData.allowanceByKey[k]));
+  });
+  // 計算結果は残す（内部保持＋コンソール出力）。画面表示は行わない。
+  travelExpenseData.orphans = orphans;
+  if (orphans.length) console.info('[概算粗利] 未紐付けの出張データ（非表示・内部保持）:', orphans);
   const orphanNote = document.getElementById('profitOrphanNote');
-  if (orphanNote) {
-    const orphans = [];
-    Object.keys(travelExpenseData.lodgingByKey).forEach(k => {
-      if (!bizKeys.has(k)) orphans.push('宿泊「' + [...(travelExpenseData.lodgingSrc[k] || [])].join('/') + '」' + fmtYen(travelExpenseData.lodgingByKey[k]));
-    });
-    Object.keys(travelExpenseData.allowanceByKey).forEach(k => {
-      if (!bizKeys.has(k)) orphans.push('手当「' + [...(travelExpenseData.allowanceSrc[k] || [])].join('/') + '」' + fmtYen(travelExpenseData.allowanceByKey[k]));
-    });
-    orphanNote.innerHTML = orphans.length ? ('⚠️ どの業務にも紐付かなかった出張データ（業務名の表記を確認してね）: ' + orphans.join(' 、 ') + ' for Claude Code') : '';
-    orphanNote.style.display = orphans.length ? 'block' : 'none';
-  }
+  if (orphanNote) { orphanNote.innerHTML = ''; orphanNote.style.display = 'none'; }
 }
 
 function renderPayPanel() {
